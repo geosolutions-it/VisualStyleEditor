@@ -7,16 +7,20 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 var ParallelUglifyPlugin = require("webpack-parallel-uglify-plugin");
 
 const assign = require('object-assign');
-const themeEntries = require('./MapStore2/build/themes.js').themeEntries;
 const extractThemesPlugin = require('./MapStore2/build/themes.js').extractThemesPlugin;
 module.exports = (env) => {
     const isProduction = env && env.production ? true : false;
     return {
-        entry: assign({
+        entry: assign(isProduction ? {} : {
             'webpack-dev-server': 'webpack-dev-server/client?http://0.0.0.0:8081', // WebpackDevServer host and port
-            'webpack': 'webpack/hot/only-dev-server', // "only" prevents reload on syntax errors
+            'webpack': 'webpack/hot/only-dev-server' // "only" prevents reload on syntax errors
+        },
+        {
             'visual-style-editor': path.join(__dirname, "js", "app")
-        }, themeEntries),
+        },
+        {
+            'themes/default': path.join(__dirname, "themes", "default", "theme.less")
+        }),
         output: {
             path: path.join(__dirname, "dist"),
             publicPath: "dist/",
@@ -138,11 +142,8 @@ module.exports = (env) => {
         },
         devServer: isProduction ? undefined : {
             proxy: {
-                '/mapstore/rest/geostore': {
-                    target: "http://dev.mapstore2.geo-solutions.it"
-                },
-                '/mapstore/proxy': {
-                    target: "http://dev.mapstore2.geo-solutions.it"
+                '/geoserver': {
+                    target: 'http://localhost:8080'
                 }
             }
         },

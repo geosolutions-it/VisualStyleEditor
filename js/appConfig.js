@@ -6,17 +6,21 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-module.exports = {
+import StylesList from './pages/StylesList';
+import MapViewer from '@mapstore/product/pages/MapViewer';
+import pluginsDef from './plugins';
+
+export default {
     pages: [{
-        name: "home",
+        name: "styles-list",
         path: "/",
-        component: require('./pages/Home')
+        component: StylesList
     }, {
-        name: "main",
-        path: "/main",
-        component: require('./pages/Main')
+        name: "mapviewer",
+        path: "/:mapId",
+        component: MapViewer
     }],
-    pluginsDef: require('./plugins.js'),
+    pluginsDef,
     initialState: {
         defaultState: {},
         mobile: {}

@@ -1,10 +1,12 @@
 {
-	"proxyUrl": "/mapstore/proxy/?url=",
-	"geoStoreUrl": "/mapstore/rest/geostore",
-	"printUrl": "/geoserver/pdf/info.json",
-  "themePrefix": "visual-style-editor",
-	"translationsPath": "./MapStore2/web/client/translations",
-	"plugins": {
-			"desktop": ["Map", "Home"]
-	}
+    "proxyUrl": "/mapstore/proxy/?url=",
+    "geoStoreUrl": "/mapstore/rest/geostore",
+    "printUrl": "/geoserver/pdf/info.json",
+    "themePrefix": "visual-style-editor",
+    "translationsPath": "./MapStore2/web/client/translations",
+    "plugins": {
+        "styles-list": [
+            "StylesManager"
+        ]
+    }
 }

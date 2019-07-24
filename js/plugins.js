@@ -6,10 +6,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-module.exports = {
+import * as StylesManagerPlugin from './plugins/StylesManager';
+
+export default {
     plugins: {
-        MapPlugin: require('../MapStore2/web/client/plugins/Map'),
-        HomePlugin: require('../MapStore2/web/client/plugins/Home')
+        StylesManagerPlugin
     },
     requires: {}
 };
