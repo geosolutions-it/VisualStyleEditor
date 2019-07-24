@@ -4,7 +4,84 @@
     "printUrl": "/geoserver/pdf/info.json",
     "themePrefix": "visual-style-editor",
     "translationsPath": "./MapStore2/web/client/translations",
+    "initialState": {
+        "defaultState": {
+            "maptype": {
+                "mapType": "openlayers"
+            }
+        }
+    },
     "plugins": {
+        "desktop": [
+            {
+                "name": "Map",
+                "cfg": {
+                    "mapOptions": {
+                        "openlayers": {
+                            "interactions": {
+                                "pinchRotate": false,
+                                "altShiftDragRotate": false
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "name": "BackgroundSelector",
+                "override": {
+                    "Layout": {
+                        "container": "body",
+                        "priority": 1
+                    }
+                }
+            },
+            {
+                "name": "CRSSelector",
+                "cfg": {
+                    "additionalCRS": {},
+                    "filterAllowedCRS": [
+                        "EPSG:4326",
+                        "EPSG:3857"
+                    ]
+                }
+            },
+            {
+                "name": "MetadataExplorer",
+                "override": {
+                    "Layout": {
+                        "priority": 4,
+                        "glyph": "folder-open",
+                        "position": 2,
+                        "size": 500,
+                        "tooltipId": "ms.catalogTooltip",
+                        "container": "right-menu"
+                    }
+                }
+            },
+            {
+                "name": "TOC",
+                "override": {
+                    "Layout": {
+                        "priority": 1,
+                        "glyph": "1-layer",
+                        "position": 2,
+                        "size": 300,
+                        "tooltipId": "ms.tocTooltip",
+                        "container": "left-menu"
+                    }
+                }
+            },
+            "Layout",
+            {
+                "name": "MapFooter",
+                "override": {
+                    "Layout": {
+                        "container": "footer",
+                        "priority": 1
+                    }
+                }
+            }
+        ],
         "styles-list": [
             "StylesManager"
         ]

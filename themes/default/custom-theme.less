@@ -1,3 +1,4 @@
+@import "less/layout.less";
 @import "less/style-manager.less";
 
 #container > .fill,
@@ -8,4 +9,19 @@
     height: 100%;
     margin: 0;
     padding: 0;
+}
+
+#map {
+    bottom: 0 !important;
+}
+
+.ms-layout {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.mapstore-map-footer {
+    position: relative;
+    z-index: 2;
 }
