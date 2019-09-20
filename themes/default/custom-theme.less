@@ -1,8 +1,18 @@
+/*
+ * Copyright 2019, GeoSolutions Sas.
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 @import "less/layout.less";
+@import "less/react-select.less";
 @import "less/style-manager.less";
+@import "less/visual-style-editor.less";
 
 #container > .fill,
-#container > .fill >div,
+#container > .fill > div,
 #page-styles-list {
     position: absolute;
     width: 100%;
@@ -24,4 +34,247 @@
 .mapstore-map-footer {
     position: relative;
     z-index: 2;
+}
+.ms-toc-container {
+    width: 300px;
+}
+.ms-toc-wrapper {
+    width: 300px;
+}
+.mapstore-map-footer {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    box-shadow: none;
+    border-top: 1px solid @ms2-color-shade-lighter;
+    & > div {
+        float: none;
+    }
+    padding: 2px;
+    .map-footer-btn {
+        margin: 0;
+    }
+}
+#mapstore-scalebox {
+    float: none;
+    .form-group, label {
+        display: flex;
+        align-items: center;
+    }
+    .form-control {
+        margin: 0;
+        margin-right: 4px;
+    }
+    label {
+        font-weight: normal;
+        padding-right: 8px;
+    }
+    .form-group {
+        margin-bottom: 0;
+    }
+}
+.ms-styles-manager {
+    .ms2-border-layout-content {
+        display: flex;
+        .empty-state-container {
+            margin: auto;
+            .empty-state-main-view {
+                .empty-state-image {
+                    width: 148px;
+                    margin: auto;
+                }
+            }
+            .empty-state-description, h1 {
+                text-align: center;
+                padding: 0 32px;
+            }
+            
+            small {
+                font-style: italic;
+                color: @ms2-color-shade-light;
+            }
+        }
+        .loader-container {
+            margin: auto;
+            width: 148px;
+            height: 148px;
+        }
+    }
+}
+
+.viewer,
+#page-visual-style-editor,
+#page-tiles-api {
+    > .ms2-border-layout-body > .ms2-border-layout-content {
+        display: flex;
+        .empty-state-container {
+            margin: auto;
+            
+            .empty-state-main-view {
+                .empty-state-image {
+                    width: 148px;
+                    margin: auto;
+                }
+            }
+            .empty-state-description, h1 {
+                text-align: center;
+                padding: 0 32px;
+            }
+            .empty-state-content {
+                font-style: italic;
+                color: @ms2-color-shade-light;
+            }
+            small {
+                font-style: italic;
+                color: @ms2-color-shade-light;
+            }
+        }
+        .loader-container {
+            margin: auto;
+            width: 148px;
+            height: 148px;
+        }
+    }
+    #mapstore-map-footer-container {
+        height: auto;
+    }
+}
+
+.ms-navbar-vse {
+    display: flex;
+    width: 100%;
+    height: 48px;
+    z-index: 1;
+    background-color: @ms2-color-background;
+    padding: 4px;
+    border-bottom: 1px solid @ms2-color-shade-lighter;
+    z-index: 2;
+    img {
+        height: 100%;
+        width: auto;
+        position: relative;
+        margin-right: 4px;
+        + img {
+            padding-left: 4px;
+            border-left: 1px solid @ms2-color-shade-lighter;
+        }
+        &:first-child {
+            margin-left: 8px;
+        }
+    }
+
+    .ms-navbar-left, .ms-navbar-right {
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        min-width: 45px;
+        width: auto;
+        position: relative;
+    }
+    .ms-navbar-right {
+        max-width: 300px;
+    }
+    
+
+    .ms-navbar-title {
+        flex: 1;
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        font-size: 18px;
+        padding: 8px;
+        border-left: 1px solid @ms2-color-shade-lighter;
+        span + span {
+            padding-left: 4px;
+        }
+    }
+}
+
+.ms-auth {
+    background-color: @ms2-color-background;
+    padding: 4px;
+    border-bottom: 1px solid @ms2-color-shade-lighter;
+    z-index: 2;
+    display: flex;
+    & > div {
+        margin-left: auto;
+        margin-right: 0;
+        max-width: 400px;
+        display: flex;
+        align-items: center;
+        & > * + * {
+            margin-left: 4px;
+        }
+        font-size: @font-size-small;
+        .form-control {
+            height: 24px;
+            font-size: @font-size-small;
+        }
+    }
+}
+
+.ms-tiles-catalog {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+
+    .ms2-border-layout-body,
+    .ms2-border-layout-content {
+        position: relative;
+        width: 100%;
+    }
+    padding: 8;
+    .msSideGrid {
+        margin: 8px;
+        width: ~"calc(100% - 16px)";
+        position: relative;
+        .row {
+            margin: 0;
+        }
+        .col-xs-12 {
+            padding: 0;
+        }
+        .mapstore-side-card:hover {
+            .shadow-soft;
+            transform: none;
+            z-index: 0;
+        }
+    }
+}
+
+.ms-home-card {
+    padding: 8px;
+    margin: 8px 0;
+    .shadow-soft;
+    cursor: pointer;
+    &:hover {
+        .shadow-far;
+        transition: all 0.3s;
+    }
+    & > div {
+        background-color: @ms2-color-shade-lighter;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-items: center;
+        .glyphicon {
+            color: @ms2-color-background;
+            font-size: 64px;
+            margin: auto;
+        }
+    }
+    p {
+        font-family: @font-family-serif;
+    }
+}
+
+.Select {
+    * {
+        font-size: @font-size-small;
+    }
+    &.Select--multi .Select-value {
+        margin-top: 3px;
+    }
 }

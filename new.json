@@ -14,40 +14,6 @@
             20037508.34,
             20037508.34
         ],
-        "layers": [
-            {
-                "format": "image/jpeg",
-                "group": "background",
-                "name": "s2cloudless:s2cloudless",
-                "opacity": 1,
-                "title": "Sentinel 2 Cloudless",
-                "type": "wms",
-                "url": [
-                    "https://1maps.geo-solutions.it/geoserver/wms",
-                    "https://2maps.geo-solutions.it/geoserver/wms",
-                    "https://3maps.geo-solutions.it/geoserver/wms",
-                    "https://4maps.geo-solutions.it/geoserver/wms",
-                    "https://5maps.geo-solutions.it/geoserver/wms",
-                    "https://6maps.geo-solutions.it/geoserver/wms"
-                ],
-                "source": "s2cloudless",
-                "visibility": false,
-                "singleTile": false
-            },
-            {
-                "source": "ol",
-                "group": "background",
-                "title": "Empty Background",
-                "fixed": true,
-                "type": "empty",
-                "visibility": true,
-                "args": [
-                    "Empty Background",
-                    {
-                        "visibility": true
-                    }
-                ]
-            }
-        ]
+        "layers": [ ]
     }
 }

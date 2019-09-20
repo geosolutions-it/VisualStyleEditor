@@ -13,7 +13,7 @@ import { get, debounce } from 'lodash';
 import { createSelector } from 'reselect';
 import { setControlProperty } from '@mapstore/actions/controls';
 import ContainerDimensions from 'react-container-dimensions';
-import SideMenu from './menu/SideMenu';
+import SideMenu from './layout/SideMenu';
 import BorderLayout from '@mapstore/components/layout/BorderLayout';
 import { getConfiguredPlugin } from '@mapstore/utils/PluginsUtils';
 import { mapSelector } from '@mapstore/selectors/map';
@@ -21,10 +21,11 @@ import { updateMapLayout } from '@mapstore/actions/maplayout';
 import maplayout from '@mapstore/reducers/maplayout';
 
 const layouts = {
-    sm: ({ bodyItems, leftMenuItems, rightMenuItems, columnItems, ...props }) => {
+    sm: ({ bodyItems, leftMenuItems, rightMenuItems, headerMenuItems, footerItems, columnItems, ...props }) => {
         return (
             <BorderLayout
                 className="ms-layout"
+                header={headerMenuItems.map(({ Component }, key) => Component && <Component key={key}/>)}
                 columns={[
                     <SideMenu
                         overlay
@@ -46,18 +47,20 @@ const layouts = {
                         onSelect={(activePlugin) => props.onControl('layoutmenu', 'activePlugin', activePlugin)}
                         items={[ ...leftMenuItems, ...rightMenuItems ]}/>,
                     ...columnItems.map(({ Component }, key) => Component && <Component key={key}/>)
-                ]}>
+                ]}
+                footer={footerItems.map(({ Component }, key) => Component && <Component key={key}/>)}>
                 <div id="ms-layout-body" style={{position: 'absolute', width: '100%', height: '100%'}}>
                     {!props.selected && bodyItems.map(({ Component }, key) => Component && <Component key={key}/>)}
                 </div>
             </BorderLayout>
         );
     },
-    md: ({ bodyItems, leftMenuItems, rightMenuItems, columnItems, ...props }) => {
+    md: ({ bodyItems, footerItems, headerMenuItems, leftMenuItems, rightMenuItems, columnItems, ...props }) => {
 
         return (
             <BorderLayout
                 className="ms-layout"
+                header={headerMenuItems.map(({ Component }, key) => Component && <Component key={key}/>)}
                 columns={[
                     <SideMenu
                         overlay
@@ -78,17 +81,19 @@ const layouts = {
                         onSelect={(activePlugin) => props.onControl('layoutmenu', 'activePlugin', activePlugin)}
                         items={[ ...leftMenuItems, ...rightMenuItems ]}/>,
                     ...columnItems.map(({ Component }, key) => Component && <Component key={key}/>)
-                ]}>
+                ]}
+                footer={footerItems.map(({ Component }, key) => Component && <Component key={key}/>)}>
                 <div id="ms-layout-body" style={{position: 'absolute', width: '100%', height: '100%'}}>
                     {bodyItems.map(({ Component }, key) => Component && <Component key={key}/>)}
                 </div>
             </BorderLayout>
         );
     },
-    lg: ({ bodyItems, leftMenuItems, rightMenuItems, columnItems, footerItems, ...props }) => {
+    lg: ({ bodyItems, leftMenuItems, headerMenuItems, rightMenuItems, columnItems, footerItems, ...props }) => {
         return (
             <BorderLayout
                 className="ms-layout"
+                header={headerMenuItems.map(({ Component }, key) => Component && <Component key={key}/>)}
                 columns={[
                     <SideMenu
                         overlay
@@ -174,6 +179,10 @@ class LayoutComponent extends React.Component {
     componentWillMount() {
 
         const items = [
+            {
+                key: 'headerMenuItems',
+                conatinerName: 'header'
+            },
             {
                 key: 'bodyItems',
                 conatinerName: 'body'
@@ -263,7 +272,7 @@ class LayoutComponent extends React.Component {
     render() {
         if (!this.props.size) return null;
         const Body = layouts[this.props.size];
-        const { bodyItems, leftMenuItems, rightMenuItems, columnItems, footerItems } = this.state;
+        const { bodyItems, leftMenuItems, rightMenuItems, columnItems, footerItems, headerMenuItems } = this.state;
         const { items, error, loading, ...props } = this.props;
         return !loading && !error && Body ? <Body
             {...props}
@@ -271,6 +280,7 @@ class LayoutComponent extends React.Component {
             leftMenuItems={leftMenuItems}
             rightMenuItems={rightMenuItems}
             columnItems={columnItems}
+            headerMenuItems={headerMenuItems}
             footerItems={footerItems}/> : null;
     }
 }

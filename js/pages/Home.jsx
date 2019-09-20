@@ -12,7 +12,7 @@ import { connect } from 'react-redux';
 import Page from '@mapstore/containers/Page';
 import BorderLayout from '@mapstore/components/layout/BorderLayout';
 
-class StylesList extends React.Component {
+class StylesAPIPage extends React.Component {
 
     static propTypes = {
         mode: PropTypes.string,
@@ -21,13 +21,13 @@ class StylesList extends React.Component {
     };
 
     static defaultProps = {
-        mode: 'styles-list'
+        mode: 'home'
     };
 
     render() {
         return (
             <Page
-                id="styles-list"
+                id="home"
                 component={BorderLayout}
                 includeCommon={false}
                 plugins={this.props.plugins}
@@ -36,4 +36,4 @@ class StylesList extends React.Component {
     }
 }
 
-export default connect(() => ({}))(StylesList);
+export default connect(() => ({}))(StylesAPIPage);

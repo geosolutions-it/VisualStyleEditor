@@ -9,22 +9,37 @@
 import * as BackgroundSelectorPlugin from '@mapstore/plugins/BackgroundSelector';
 import * as CRSSelectorPlugin from '@mapstore/plugins/CRSSelector';
 import * as LayoutPlugin from './plugins/Layout';
-import * as MapPlugin from '@mapstore/plugins/Map';
+import * as MapPlugin from './plugins/Map';
+import * as NavBarPlugin from './plugins/NavBar';
+import TilesCatalogPlugin from './plugins/TilesCatalog';
+import HomepagePlugin from './plugins/Homepage';
+import AuthPlugin from './plugins/Auth';
+import * as LayerSettingsPlugin from './plugins/LayerSettings';
+
 import * as MapFooterPlugin from '@mapstore/plugins/MapFooter';
-import * as MetadataExplorerPlugin from '@mapstore/plugins/MetadataExplorer';
 import * as StylesManagerPlugin from './plugins/StylesManager';
 import * as TOCPlugin from '@mapstore/plugins/TOC';
+import * as VisualStyleEditorPlugin from './plugins/VisualStyleEditor';
+import * as StylesheetPlugin from './plugins/Stylesheet';
+import * as ScaleBoxPlugin from '@mapstore/plugins/ScaleBox';
 
 export default {
     plugins: {
+        TOCPlugin,
         BackgroundSelectorPlugin,
         CRSSelectorPlugin,
         LayoutPlugin,
         MapPlugin,
         MapFooterPlugin,
-        MetadataExplorerPlugin,
         StylesManagerPlugin,
-        TOCPlugin
+        VisualStyleEditorPlugin,
+        StylesheetPlugin,
+        ScaleBoxPlugin,
+        NavBarPlugin,
+        TilesCatalogPlugin,
+        LayerSettingsPlugin,
+        HomepagePlugin,
+        AuthPlugin
     },
     requires: {}
 };

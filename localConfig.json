@@ -1,5 +1,13 @@
 {
-    "proxyUrl": "/mapstore/proxy/?url=",
+    "proxyUrl": {
+        "url": "proxy/?url=",
+        "useCORS": [
+            "http://localhost:8090/geoserver",
+            "http://localhost:8080/geoserver",
+            "https://maps.geo-solutions.it/geoserver",
+            "http://maps.geo-solutions.it/geoserver"
+        ]
+    },
     "geoStoreUrl": "/mapstore/rest/geostore",
     "printUrl": "/geoserver/pdf/info.json",
     "themePrefix": "visual-style-editor",
@@ -11,8 +19,64 @@
             }
         }
     },
+    "projectionDefs": [
+        {
+            "code": "EPSG:3395",
+            "def": "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",
+            "extent": [
+                -20026376.39,
+                -15496570.74,
+                20026376.39,
+                18764656.23
+            ],
+            "worldExtent": [
+                -180.0,
+                -80.0,
+                180.0,
+                84.0
+            ]
+        },
+        {
+            "code": "EPSG:22770",
+            "def": "+proj=lcc +lat_1=34.65 +lat_0=34.65 +lon_0=37.35 +k_0=0.9996256 +x_0=300000 +y_0=300000 +a=6378249.2 +b=6356515 +towgs84=-190.421,8.532,238.69,0,0,0,0 +units=m +no_defs",
+            "extent": [
+                135949.52,
+                41951.07,
+                745970.62,
+                605219.10
+            ],
+            "worldExtent": [
+                35.61,
+                32.31,
+                42.38,
+                37.3
+            ]
+        }
+    ],
     "plugins": {
-        "desktop": [
+        "home": [
+            {
+                "name": "NavBar",
+                "cfg": {
+                    "containerPosition": "header"
+                }
+            },
+            "Homepage"
+        ],
+        "tiles-api": [
+            "Layout",
+            {
+                "name": "NavBar",
+                "override": {
+                    "Layout": {
+                        "container": "header",
+                        "priority": 1
+                    }
+                },
+                "cfg": {
+                    "title": "Tiles API"
+                }
+            },
             {
                 "name": "Map",
                 "cfg": {
@@ -23,16 +87,87 @@
                                 "altShiftDragRotate": false
                             }
                         }
+                    },
+                    "title": "Tiles API",
+                    "description": "map is empty",
+                    "content": "add a layer from catalog",
+                    "glyph": "th-large"
+                }
+            },
+            {
+                "name": "TOC",
+                "override": {
+                    "Layout": {
+                        "priority": 1,
+                        "glyph": "1-layer",
+                        "position": 1,
+                        "size": "auto",
+                        "container": "left-menu"
+                    }
+                },
+                "cfg": {
+                    "activateSettingsTool": false
+                }
+            },
+            {
+                "name": "MapFooter",
+                "override": {
+                    "Layout": {
+                        "container": "footer",
+                        "priority": 1
                     }
                 }
             },
             {
-                "name": "BackgroundSelector",
-                "override": {
-                    "Layout": {
-                        "container": "body",
-                        "priority": 1
-                    }
+                "name": "TilesCatalog",
+                "cfg": {
+                    "defaultService": "http://localhost:8080/geoserver/ogc/tiles"
+                }
+            },
+            {
+                "name": "CRSSelector",
+                "cfg": {
+                    "additionalCRS": {},
+                    "filterAllowedCRS": [
+                        "EPSG:4326",
+                        "EPSG:3857"
+                    ]
+                }
+            },
+            "LayerSettings"
+        ],
+        "styles-api": [
+            {
+                "name": "StylesManager",
+                "cfg": {
+                    "defaultService": "http://localhost:8080/geoserver/ogc/styles"
+                }
+            },
+            {
+                "name": "NavBar",
+                "cfg": {
+                    "containerPosition": "header",
+                    "title": "Styles API"
+                }
+            }
+        ],
+        "visual-style-editor": [
+            "Auth",
+            {
+                "name": "Map",
+                "cfg": {
+                    "mapOptions": {
+                        "openlayers": {
+                            "interactions": {
+                                "pinchRotate": false,
+                                "altShiftDragRotate": false
+                            }
+                        }
+                    },
+                    "title": "Visual Style Editor",
+                    "description": "map is empty",
+                    "content": "go to homepage and select Styles API link to access style list",
+                    "glyph": "dropper"
                 }
             },
             {
@@ -46,29 +181,18 @@
                 }
             },
             {
-                "name": "MetadataExplorer",
-                "override": {
-                    "Layout": {
-                        "priority": 4,
-                        "glyph": "folder-open",
-                        "position": 2,
-                        "size": 500,
-                        "tooltipId": "ms.catalogTooltip",
-                        "container": "right-menu"
-                    }
-                }
-            },
-            {
                 "name": "TOC",
                 "override": {
                     "Layout": {
                         "priority": 1,
                         "glyph": "1-layer",
-                        "position": 2,
-                        "size": 300,
-                        "tooltipId": "ms.tocTooltip",
+                        "position": 1,
+                        "size": "auto",
                         "container": "left-menu"
                     }
+                },
+                "cfg": {
+                    "activateSettingsTool": false
                 }
             },
             "Layout",
@@ -80,10 +204,22 @@
                         "priority": 1
                     }
                 }
+            },
+            "ScaleBox",
+            "VisualStyleEditor",
+            "Stylesheet",
+            {
+                "name": "NavBar",
+                "override": {
+                    "Layout": {
+                        "container": "header",
+                        "priority": 1
+                    }
+                },
+                "cfg": {
+                    "title": "Visual Style Editor"
+                }
             }
-        ],
-        "styles-list": [
-            "StylesManager"
         ]
     }
 }

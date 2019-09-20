@@ -44,6 +44,11 @@ module.exports = (env) => {
             new DefinePlugin({
                 "__DEVTOOLS__": !isProduction
             }),
+            new DefinePlugin({
+                'process.env': {
+                  'NODE_ENV': isProduction ? '"production"' : '""'
+                }
+            }),
             new NormalModuleReplacementPlugin(/leaflet$/, path.join(__dirname, "MapStore2", "web", "client", "libs", "leaflet")),
             new NormalModuleReplacementPlugin(/openlayers$/, path.join(__dirname, "MapStore2", "web", "client", "libs", "openlayers")),
             new NormalModuleReplacementPlugin(/cesium$/, path.join(__dirname, "MapStore2", "web", "client", "libs", "cesium")),
@@ -136,7 +141,13 @@ module.exports = (env) => {
                     use: [{
                         loader: "babel-loader"
                     }],
-                    include: [path.join(__dirname, "js"), path.join(__dirname, "MapStore2", "web", "client")]
+                    include: [
+                        path.join(__dirname, "js"),
+                        path.join(__dirname, "MapStore2", "web", "client"),
+                        path.join(__dirname, "node_modules", "query-string"),
+                        path.join(__dirname, "node_modules", "strict-uri-encode"),
+                        path.join(__dirname, "node_modules", "split-on-first")
+                    ]
                 }
             ]
         },
