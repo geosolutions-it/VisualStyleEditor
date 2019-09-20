@@ -71,6 +71,15 @@ class TilesCatalogPlugin extends React.Component {
                             </InputGroup.Addon>
                         </InputGroup>
                     </FormGroup>
+                    <FormGroup
+                        controlId="filter"
+                        key="filter">
+                        <FormControl
+                            value={ this.state.filterText || ''}
+                            type="text"
+                            placeholder="Filter collections..."
+                            onChange={(event) => this.setState({ filterText: event.target.value })}/>
+                    </FormGroup>
                     {this.state.error && <Alert bsStyle="danger"> <div>{this.state.error}</div></Alert>}
                     {!this.state.error && (this.state.records || []).length === 0 && (
                         <div style={{ padding: 8, textAlign: 'center', fontStyle: 'italic' }}>
@@ -107,7 +116,7 @@ class TilesCatalogPlugin extends React.Component {
                         items={records
                         .map((layer) => ({
                             id: layer.name,
-                            title: layer.title,
+                            title: layer.title || layer.name,
                             tools: <Toolbar
                                 btnDefaultProps={{
                                     className: 'square-button-md',
@@ -169,7 +178,7 @@ class TilesCatalogPlugin extends React.Component {
             loading: true,
             error: null
         });
-        textSearch(this.state.service, startPosition, this.props.pageSize, '')
+        textSearch(this.state.service, startPosition, this.props.pageSize, this.state.filterText || '')
             .then(({ records, numberOfRecordsMatched }) => {
                 this.setState({
                     records,

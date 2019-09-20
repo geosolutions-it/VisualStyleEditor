@@ -111,7 +111,8 @@ class VisualStyleEditor extends Component {
             id,
             availableStyles = [],
             name: layerName,
-            style
+            style,
+            layerType
         } = this.props.layer || {};
 
         return (
@@ -165,6 +166,7 @@ class VisualStyleEditor extends Component {
                                         {
                                             glyph: 'ok',
                                             tooltip: 'Apply style',
+                                            visible: layerType === 'raster',
                                             onClick: () => this.saveStyle()
                                         }
                                     ]}/>

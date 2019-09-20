@@ -31,15 +31,18 @@ const parseStyle = (styleMetadata) => {
     const layersUrls = layers
         .map(({ id, sampleData: sampleDataArray, type }) => {
 
-            const sampleData = sampleDataArray.find(({ type: dataType, rel }) => dataType === 'application/json' && rel === 'data');
+            const sampleData = sampleDataArray.find(({ type: dataType, rel }) => dataType === 'application/json' && rel === 'data')
+            || sampleDataArray.find(({ rel, href }) => rel === 'tiles' && href.indexOf(id) !== -1);
+
+            if (!sampleData) return null;
             const separator = '/collections/';
-            const [startUrl, oldName] = (sampleData && sampleData.href && sampleData.href || '')
+            const [startUrl, oldName] = decodeURIComponent(sampleData && sampleData.href && sampleData.href || '')
                 .replace('/features', '/tiles')
                 .replace('/coverages', '/tiles')
                 .replace('/items', '')
                 .split(separator);
 
-            const splitName = oldName.split('__');
+            const splitName = oldName.split(/__|\:/);
             const workspace = splitName[1] !== undefined && splitName[0];
             const layerUrl = `${startUrl}${separator}${workspace ? `${workspace}:` : ''}${id}`;
 

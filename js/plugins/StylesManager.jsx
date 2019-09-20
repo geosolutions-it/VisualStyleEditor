@@ -77,7 +77,9 @@ class SearchInput extends Component {
     static propTypes = {
         service: PropTypes.string,
         onChange: PropTypes.func,
-        loading: PropTypes.bool
+        loading: PropTypes.bool,
+        filterText: PropTypes.string,
+        onFilter: PropTypes.func
     };
 
     state = {
@@ -111,6 +113,16 @@ class SearchInput extends Component {
                                 {loading && <Loader size={19}/> || <Glyphicon glyph="search"/>}
                             </InputGroup.Addon>
                         </InputGroup>
+                    </FormGroup>
+                    <br />
+                    <FormGroup
+                        controlId="filter"
+                        key="filter">
+                        <FormControl
+                            value={ this.props.filterText || ''}
+                            type="text"
+                            placeholder="Filter styles..."
+                            onChange={(event) => this.props.onFilter(event.target.value)}/>
                     </FormGroup>
                 </div>
             </div>
@@ -254,10 +266,13 @@ class StylesManager extends Component {
                         key="search-input"
                         loading={this.state.loading}
                         service={this.state.service}
+                        filterText={this.state.filterText || ''}
+                        onFilter={(filterText) => this.setState({ filterText })}
                         onChange={(service) => {
                             this.setState({
                                 loading: true,
-                                error: false
+                                error: false,
+                                filterText: ''
                             });
                             getOGCStyles(service)
                                 .then((styles) =>
@@ -290,7 +305,11 @@ class StylesManager extends Component {
                         ]
                     }>
                     <StyleList
-                        styles={[ ...this.state.styles]
+                        styles={this.state.styles
+                            .filter((style) => !this.state.filterText || this.state.filterText &&
+                                style.id && style.id.toLowerCase().indexOf(this.state.filterText.toLowerCase()) !== -1
+                                || style.title && style.title.toLowerCase().indexOf(this.state.filterText.toLowerCase()) !== -1
+                            )
                             .map((style) => ({
                                 ...style,
                                 selected: (this.state.selectedStyles || []).indexOf(style.id) !== -1
