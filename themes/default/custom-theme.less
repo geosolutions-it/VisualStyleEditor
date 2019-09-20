@@ -101,6 +101,33 @@
     }
 }
 
+#container > .fill > div {
+    display: flex;
+    align-items: center;
+    > .empty-state-container {
+        margin: auto;
+        
+        .empty-state-main-view {
+            .empty-state-image {
+                width: 148px;
+                margin: auto;
+            }
+        }
+        .empty-state-description, h1 {
+            text-align: center;
+            padding: 0 32px;
+        }
+        .empty-state-content {
+            font-style: italic;
+            color: @ms2-color-shade-light;
+        }
+        small {
+            font-style: italic;
+            color: @ms2-color-shade-light;
+        }
+    }
+}
+
 .viewer,
 #page-visual-style-editor,
 #page-tiles-api {
