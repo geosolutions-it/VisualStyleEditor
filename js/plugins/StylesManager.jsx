@@ -75,26 +75,35 @@ const getOGCStyles = (serviceUrl) =>
 class SearchInput extends Component {
 
     static propTypes = {
-        service: PropTypes.string,
+        stylesService: PropTypes.string,
+        tilesService: PropTypes.string,
         onChange: PropTypes.func,
         loading: PropTypes.bool,
         filterText: PropTypes.string,
-        onFilter: PropTypes.func
+        onFilter: PropTypes.func,
+        onEdit: PropTypes.func,
+        editLabel: PropTypes.string,
+        editDisabled: PropTypes.bool
     };
 
     state = {
-        service: ''
+        stylesService: '',
+        tilesService: ''
     };
 
     componentWillMount() {
+        localStorage.setItem('stylesServiceUrl', this.props.stylesService);
+        localStorage.setItem('tilesServiceUrl', this.props.tilesService);
         this.setState({
-            service: this.props.service
+            stylesService: this.props.stylesService,
+            tilesService: this.props.tilesService
         });
     }
 
     render() {
-        const { onChange = () => {}, loading } = this.props;
-        const { service = '' } = this.state;
+        const { onChange = () => {}, loading, onEdit = () => {}, editDisabled } = this.props;
+        const { stylesService = '', tilesService = '' } = this.state;
+        const disabled = editDisabled || !tilesService;
         return (
             <div className="ms-style-search-input">
                 <div>
@@ -103,26 +112,47 @@ class SearchInput extends Component {
                         key="service">
                         <InputGroup>
                             <FormControl
-                                value={service}
+                                value={stylesService || ''}
                                 type="text"
-                                placeholder="Enter style service..."
-                                onChange={(event) => this.setState({ service: event.target.value })}/>
+                                placeholder="Enter styles service..."
+                                onChange={(event) => this.setState({ stylesService: event.target.value })}/>
                             <InputGroup.Addon
                                 className="btn"
-                                onClick={() => loading ? () => {} : onChange(service)}>
+                                onClick={() => loading ? () => {} : onChange('stylesService', stylesService)}>
                                 {loading && <Loader size={19}/> || <Glyphicon glyph="search"/>}
                             </InputGroup.Addon>
                         </InputGroup>
                     </FormGroup>
-                    <br />
                     <FormGroup
                         controlId="filter"
-                        key="filter">
+                        key="filter"
+                        style={{ marginTop: 4 }}>
                         <FormControl
                             value={ this.props.filterText || ''}
                             type="text"
                             placeholder="Filter styles..."
                             onChange={(event) => this.props.onFilter(event.target.value)}/>
+                    </FormGroup>
+                    <FormGroup
+                        controlId="styleService"
+                        key="styleService"
+                        style={{ marginTop: 4 }}>
+                        <InputGroup>
+                            <FormControl
+                                value={tilesService || ''}
+                                type="text"
+                                placeholder="Enter tiles service..."
+                                onChange={(event) => this.setState({ tilesService: event.target.value })}
+                                onBlur={(event) => {
+                                    onChange('tilesService', event.target.value);
+                                }}/>
+                            <InputGroup.Addon
+                                className="btn"
+                                disabled={disabled}
+                                onClick={() => loading || disabled ? () => {} : onEdit(tilesService)}>
+                                {this.props.editLabel}
+                            </InputGroup.Addon>
+                        </InputGroup>
                     </FormGroup>
                 </div>
             </div>
@@ -234,11 +264,13 @@ class StylesManager extends Component {
     static propTypes = {
         onInit: PropTypes.func,
         styles: PropTypes.array,
-        defaultService: PropTypes.string
+        defaultStylesService: PropTypes.string,
+        defaultTilesService: PropTypes.string
     };
 
     static defaultProps = {
-        defaultService: '',
+        defaultStylesService: '',
+        defaultTilesService: '',
         onInit: () => {},
         styles: [ ]
     };
@@ -251,9 +283,11 @@ class StylesManager extends Component {
 
     componentWillMount() {
         localStorage.setItem('selectedStyles', JSON.stringify([]));
-        localStorage.setItem('serviceUrl', null);
+        const stylesServiceUrl = localStorage.getItem('stylesServiceUrl');
+        const tilesServiceUrl = localStorage.getItem('tilesServiceUrl');
         this.setState({
-            service: this.props.defaultService
+            stylesService: stylesServiceUrl !== null && stylesServiceUrl !== 'null' && stylesServiceUrl || this.props.defaultStylesService,
+            tilesService: tilesServiceUrl !== null && tilesServiceUrl !== 'null' && tilesServiceUrl || this.props.defaultTilesService
         });
     }
 
@@ -262,13 +296,19 @@ class StylesManager extends Component {
             <div
                 className="ms-styles-manager">
                 <BorderLayout
-                    header={[<SearchInput
+                    header={<SearchInput
                         key="search-input"
                         loading={this.state.loading}
-                        service={this.state.service}
+                        stylesService={this.state.stylesService}
+                        tilesService={this.state.tilesService}
                         filterText={this.state.filterText || ''}
                         onFilter={(filterText) => this.setState({ filterText })}
-                        onChange={(service) => {
+                        onEdit={() => this.props.onInit('/visual-style-editor')}
+                        editDisabled={(this.state.selectedStyles || []).length > 0 ? false : true}
+                        editLabel={(this.state.selectedStyles || []).length > 1 ? 'Edit Selected Styles' : 'Edit Selected Style'}
+                        onChange={(key, service) => {
+                            if (key === 'tilesService') return localStorage.setItem(key, service);
+
                             this.setState({
                                 loading: true,
                                 error: false,
@@ -288,21 +328,8 @@ class StylesManager extends Component {
                                         error: isObject(data) && data.description || 'Connection error'
                                     })
                                 );
-                        }}/>,
-                        <div key="toolbar" style={{ borderBottom: '1px solid #ddd', padding: 8, display: 'flex', justifyContent: 'center' }}>
-                            <Toolbar
-                                btnDefaultProps={{
-                                    className: 'square-button-md',
-                                    bsStyle: 'primary'
-                                }}
-                                buttons={[{
-                                    glyph: 'pencil',
-                                    disabled: (this.state.selectedStyles || []).length > 0 ? false : true,
-                                    tooltip: (this.state.selectedStyles || []).length > 1 ? 'Edit selected styles' : 'Edit selected style',
-                                    onClick: () => this.props.onInit('/visual-style-editor')
-                                }]}/>
-                        </div>
-                        ]
+                            return localStorage.setItem(key, service);
+                        }}/>
                     }>
                     <StyleList
                         styles={this.state.styles
@@ -386,7 +413,6 @@ class StylesManager extends Component {
     }
 
     selectStyle = (styleMetadata = {}, add = true, isSelected) => {
-        localStorage.setItem('serviceUrl', this.state.service);
         if (isSelected) {
             let selectedStyles;
             try {

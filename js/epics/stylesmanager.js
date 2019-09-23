@@ -19,9 +19,19 @@ import { setMetadata } from '../actions/stylesheet';
 import { getBackgroundColor } from '../utils/StyleParser';
 import { splitStyleSheet, mimeTypeToStyleFormat } from '@mapstore/utils/VectorStyleUtils';
 import { isVectorFormat } from '@mapstore/utils/VectorTileUtils';
-import { collectionUrlToLayer } from '../api/OGC';
+import { collectionUrlToLayer, getCollections } from '../api/OGC';
 
-const parseStyle = (styleMetadata) => {
+const parseStyle = (styleMetadata, collections) => {
+    const collectionsNameWorkspace = collections.map((collection) => {
+        const splitName = collection.id.split(/__|\:/);
+        const workspace = splitName[1] !== undefined && splitName[0];
+        const name = splitName.length > 1 ? splitName[1] : splitName[0];
+        return {
+            ...collection,
+            workspace,
+            name
+        };
+    });
     const { layers = [], stylesheets = [] } = styleMetadata || {};
     const stylesUrls = stylesheets
         .map(({ link }) => {
@@ -29,23 +39,10 @@ const parseStyle = (styleMetadata) => {
         })
         .filter(val => val);
     const layersUrls = layers
-        .map(({ id, sampleData: sampleDataArray, type }) => {
-
-            const sampleData = sampleDataArray.find(({ type: dataType, rel }) => dataType === 'application/json' && rel === 'data')
-            || sampleDataArray.find(({ rel, href }) => rel === 'tiles' && href.indexOf(id) !== -1);
-
-            if (!sampleData) return null;
-            const separator = '/collections/';
-            const [startUrl, oldName] = decodeURIComponent(sampleData && sampleData.href && sampleData.href || '')
-                .replace('/features', '/tiles')
-                .replace('/coverages', '/tiles')
-                .replace('/items', '')
-                .split(separator);
-
-            const splitName = oldName.split(/__|\:/);
-            const workspace = splitName[1] !== undefined && splitName[0];
-            const layerUrl = `${startUrl}${separator}${workspace ? `${workspace}:` : ''}${id}`;
-
+        .map(({ id, type }) => {
+            const { links = [] } = collectionsNameWorkspace.find(({ name }) => name === id) || {};
+            const layerUrl = (links.find(({ rel, type: mimeType }) => rel === 'collection' && mimeType === 'application/json') || {}).href;
+            if (!layerUrl) return null;
             return {
                 id,
                 styleLayerName: id,
@@ -155,11 +152,16 @@ export const vseInitMapConfiguration = (action$) =>
                             setControlProperty('visualStyleEditor', 'loading', false)
                         );
                     }
+                    let tilesService = localStorage.getItem('tilesServiceUrl');
                     return Rx.Observable
-                        .defer(() => axios.all((selectedStyles).map((style) => updateStyle(style))))
-                        .switchMap((styles) => {
+                        .defer(() => axios.all([
+                            getCollections(tilesService).then((collections) => collections),
+                            ...(selectedStyles).map((style) => updateStyle(style))]))
+                        .switchMap((res) => {
+                            const [ collections ] = res;
+                            const styles = res.filter((item, idx) => idx > 0);
                             return Rx.Observable.defer(() => axios.all(
-                                styles.map(styleMetadata => parseStyle(styleMetadata))
+                                styles.map(styleMetadata => parseStyle(styleMetadata, collections))
                             ))
                             .switchMap((config) => {
                                 const newLayers = config.reduce((acc, { layers: configLayers, styles: stylesheets, styleMetadata }) => {
@@ -183,7 +185,7 @@ export const vseInitMapConfiguration = (action$) =>
                                         })
                                     ];
                                 }, []);
-                                let serviceUrl = localStorage.getItem('serviceUrl');
+                                let serviceUrl = localStorage.getItem('stylesService');
                                 const metadata = config.map(({ styleMetadata, styles: stylesheets }) => {
                                     const style = head(stylesheets.filter(({ native }) => native));
                                     const format = mimeTypeToStyleFormat(style && style.link && style.link.type);

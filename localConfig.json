@@ -74,7 +74,7 @@
                     }
                 },
                 "cfg": {
-                    "title": "Tiles API"
+                    "title": "Map & Tiles API"
                 }
             },
             {
@@ -140,7 +140,8 @@
             {
                 "name": "StylesManager",
                 "cfg": {
-                    "defaultService": "http://localhost:8080/geoserver/ogc/styles"
+                    "defaultStylesService": "http://localhost:8080/geoserver/ogc/styles",
+                    "defaultTilesService": "http://localhost:8080/geoserver/ogc/tiles"
                 }
             },
             {

@@ -27,12 +27,14 @@ import axios from 'axios';
 import { setControlProperty } from '@mapstore/actions/controls';
 import { setBackground } from '../actions/stylesheet';
 import { createShallowSelectorCreator } from '@mapstore/utils/ReselectUtils';
-import { mergeStyleSheet } from '@mapstore/utils/VectorStyleUtils';
+import { mergeStyleSheet, convertStyle } from '@mapstore/utils/VectorStyleUtils';
 import { Button, Glyphicon, ControlLabel, FormGroup, FormControl, Alert } from 'react-bootstrap';
 import ColorSelector from '@mapstore/components/style/ColorSelector';
 import ResizableModal from '@mapstore/components/misc/ResizableModal';
 import tinycolor from 'tinycolor2';
 import uuidv1 from 'uuid/v1';
+import MapboxGLMap from '../components/MapboxGLMap';
+import isNumber from 'lodash/isNumber';
 
 const stylesheetLayersSelector = createShallowSelectorCreator(
     (a, b) => {
@@ -40,6 +42,37 @@ const stylesheetLayersSelector = createShallowSelectorCreator(
             || !isNil(a) && !isNil(b) && a.id === b.id && a.title === b.title && a.name === b.name;
     }
 )(layersSelector, layers => layers);
+
+function formatToMode(format) {
+    const modes = {
+        mbstyle: 'application/json',
+        sld: 'xml'
+    };
+    return modes[format];
+}
+function jsonParser(key, value) {
+    return isNumber(parseFloat(value)) && parseFloat(value) || value;
+}
+function toEditorCode(format, code, sources, asObject) {
+    if (format === 'mbstyle') {
+        let mbstyle;
+        try {
+            mbstyle = !isObject(code) && JSON.parse(code, jsonParser) || JSON.parse(JSON.stringify(code, null, 2), jsonParser);
+            const { layers } = mbstyle;
+            mbstyle = {
+                ...mbstyle,
+                name: 'testbed-15',
+                sources,
+                layers: layers.map(layer => ({ ...layer, id: uuidv1() }))
+            };
+            mbstyle = asObject ? mbstyle : JSON.stringify(mbstyle, null, 2);
+        } catch(e) {
+            mbstyle = '{}';
+        }
+        return mbstyle;
+    }
+    return code;
+}
 
 const selectedStyleSelector = createShallowSelectorCreator((a, b) => {
     if (isObject(a)) return a.id === a.id;
@@ -50,20 +83,18 @@ const selectedStyleSelector = createShallowSelectorCreator((a, b) => {
     const selectedNodes = selectedNodesSelector(state) || [];
     if (!selectedStyle || !selectedNodes.find(node => selectedStyle && selectedStyle === node)) return {};
     const metadata = get(state, 'stylesheet.metadata') || [];
-    const { backgroundColor, format, ...form } = head(metadata.filter(({ id }) => selectedStyle !== undefined && id === selectedStyle)) || {};
+    const { backgroundColor, ...form } = head(metadata.filter(({ id }) => selectedStyle !== undefined && id === selectedStyle)) || {};
     const stylesheets = [...selectedLayers]
         .reverse()
         .filter(val => val)
         .filter(({ visualStyleEditor }) => visualStyleEditor && visualStyleEditor.styleMetadataId === selectedStyle)
         .map(({ vectorStyle, name }) => vectorStyle && vectorStyle.body ? { layerName: name, group: [vectorStyle.body] } : null)
         .filter(val => val);
-    const code = stylesheets.length === 1
-        ? stylesheets[0]
-        : mergeStyleSheet(format, stylesheets);
+    const code = form.format && mergeStyleSheet(form && form.format, stylesheets);
     return {
         selectedStyle,
         form,
-        code: setBackgroundColor(format, code, { backgroundColor, styleName: selectedStyle }),
+        code: form.format && setBackgroundColor(form.format, code, { backgroundColor, styleName: selectedStyle }),
         backgroundColor
     };
 }, style => style);
@@ -92,7 +123,10 @@ class Stylesheet extends Component {
     };
 
     componentDidMount() {
-        this.setState({ form: this.props.form });
+        this.setState({
+            form: this.props.form,
+            currentFormat: this.props.form && this.props.form.format
+        });
     }
 
     componentWillUpdate(newProps) {
@@ -102,7 +136,47 @@ class Stylesheet extends Component {
     }
     componentDidUpdate(prevProps) {
         if (this.props.selectedStyle && this.props.selectedStyle !== prevProps.selectedStyle) {
-            this.setState({ form: this.props.form });
+            this.setState({
+                form: this.props.form,
+                currentFormat: this.props.form && this.props.form.format,
+                currentCode: this.props.code,
+                sources: this.props.layers.reduce((acc, { styleLayerName, tileUrls, style, allowedSRS }) => {
+                    const format = 'application/vnd.mapbox-vector-tile';
+                    const tileUrlObj = (tileUrls || []).find((_tileUrl) => format === _tileUrl.format);
+                    const tilingSchemeId = allowedSRS['EPSG:900913'] && 'EPSG:900913' || allowedSRS['EPSG:3857'] && 'EPSG:3857';
+                    if (!tileUrlObj) {
+                        const tileUrl = ((tileUrls || []).find((_tileUrl) => _tileUrl.format === 'image/png' || _tileUrl.format === 'image/png8') || {}).url;
+                        if (!tileUrl) return { ...acc };
+                        const url = (tileUrl || '')
+                            .replace(/\{styleId\}/, style)
+                            .replace(/\{tileMatrixSetId\}/, tilingSchemeId)
+                            .replace(/\{tileMatrix\}/, `${tilingSchemeId}:{z}`)
+                            .replace(/\{tileRow\}/, '{y}')
+                            .replace(/\{tileCol\}/, '{x}');
+                        return {
+                            ...acc,
+                            [styleLayerName]: {
+                                type: 'raster',
+                                tiles: [ url ]
+                            }
+                        };
+                    }
+                    const tileUrl = tileUrlObj.url;
+                    const url = (tileUrl || '')
+                        .replace(/\{styleId\}/, style)
+                        .replace(/\{tileMatrixSetId\}/, tilingSchemeId)
+                        .replace(/\{tileMatrix\}/, `${tilingSchemeId}:{z}`)
+                        .replace(/\{tileRow\}/, '{y}')
+                        .replace(/\{tileCol\}/, '{x}');
+                    return {
+                        ...acc,
+                        [styleLayerName]: {
+                            type: 'vector',
+                            tiles: [ url ]
+                        }
+                    };
+                }, {})
+            });
         }
     }
 
@@ -138,7 +212,6 @@ class Stylesheet extends Component {
         const { selectedTab, form } = this.state;
         const { code, selectedStyle } = this.props;
         const selectedMetadataId = form && form.id;
-
         const tabs = [
             {
                 key: 'metadata',
@@ -197,10 +270,87 @@ class Stylesheet extends Component {
                 id: 'code',
                 glyph: 'code',
                 Body: () => (
-                    <Editor
-                        key={selectedMetadataId}
-                        code={code}
-                        mode="xml"/>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', height: '100%' }}>
+                        <div style={{ padding: 8, zIndex: 10 }}>
+                            <Form
+                                values={{
+                                    currentFormat: this.state.currentFormat
+                                }}
+                                form={[
+                                    {
+                                        type: 'select',
+                                        id: 'currentFormat',
+                                        label: 'Format',
+                                        placeholder: 'Select format...',
+                                        clearable: false,
+                                        ignoreAccents: false,
+                                        setValue: (fieldId, { currentFormat } = {}) => {
+                                            return currentFormat && currentFormat.value && { currentFormat: currentFormat.value };
+                                        },
+                                        options: [{
+                                            value: 'sld',
+                                            label: 'SLD'
+                                        }, {
+                                            value: 'mbstyle',
+                                            label: 'MapBox Style'
+                                        }]
+                                    }
+                                ]}
+                                onChange={({ currentFormat }) => {
+                                    if (currentFormat && currentFormat !== this.state.currentFormat) {
+                                        convertStyle(this.state.currentFormat, currentFormat, this.state.currentCode)
+                                            .then((currentCode) => {
+                                                this.setState({
+                                                    currentCode,
+                                                    currentFormat
+                                                });
+                                            });
+                                    } else {
+                                        this.setState({
+                                            currentFormat: this.state.currentFormat
+                                        });
+                                    }
+                                }}/>
+                            <Toolbar
+                                btnDefaultProps={{
+                                    bsStyle: 'primary',
+                                    tooltipPosition: 'left',
+                                    bsSize: 'sm'
+                                }}
+                                buttons={[{
+                                    text: 'Mapbox GL Preview',
+                                    visible: this.state.currentFormat === 'mbstyle' ? true : false,
+                                    onClick: () => this.setState({ mapboxGLPreview: true })
+                                }]}/>
+                            <ResizableModal
+                                size="lg"
+                                title="Mapbox GL Preview"
+                                show={this.state.mapboxGLPreview}
+                                onClose={() => this.setState({ mapboxGLPreview: false })}>
+                                <div style={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    height: '100%',
+                                    transform: 'translate3d(0px, 0px, 0px)'
+                                    }}>
+                                    <MapboxGLMap
+                                        center={[36.103666252, 32.621830846]}
+                                        zoom={12}
+                                        id="mapbox-gl-preview"
+                                        mbstyle={
+                                            toEditorCode(this.state.currentFormat, this.state.currentCode, this.state.sources, true)
+                                        }/>
+                                </div>
+                            </ResizableModal>
+
+                        </div>
+                        <div style={{ flex: 1}}>
+                            <Editor
+                                key={selectedMetadataId}
+                                code={toEditorCode(this.state.currentFormat, this.state.currentCode, this.state.sources)}
+                                mode={formatToMode(this.state.currentFormat)}/>
+                        </div>
+                    </div>
                 )
             }
         ].map(tab => ({...tab, active: tab.id === selectedTab}));

@@ -24,9 +24,9 @@ class HomepagePlugin extends React.Component {
         onClick: () => {},
         pages: [
             {
-                title: "Tiles API",
+                title: "Map & Tiles API",
                 link: "/tiles-api",
-                description: "This demo shows Tiles API implementation in MapStore.",
+                description: "This demo shows Map & Tiles API implementation in MapStore.",
                 glyph: "th-large"
             },
             {

@@ -164,6 +164,23 @@ export const getRecords = function(url, startPosition, maxRecords, text) {
         });
 };
 
+export const getCollections = function(url) {
+    const cached = capabilitiesCache[url];
+    if (cached && new Date().getTime() < cached.timestamp + (ConfigUtils.getConfigProp('cacheExpire') || 60) * 1000) {
+        return new Promise((resolve) => {
+            resolve(cached.data && cached.data.collections);
+        });
+    }
+    return axios.get(parseUrl(url))
+        .then(({ data }) => {
+            capabilitiesCache[url] = {
+                timestamp: new Date().getTime(),
+                data
+            };
+            return data && data.collections;
+        });
+};
+
 export const textSearch = function(url, startPosition, maxRecords, text) {
     return getRecords(url, startPosition, maxRecords, text);
 };
