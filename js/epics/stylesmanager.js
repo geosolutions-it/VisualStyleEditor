@@ -114,6 +114,7 @@ const setupLayer = (layer, availableStyles, styleMetadata) => {
             style: styleMetadata.id.replace('__', ':'),
             availableStyles
         },
+        style: styleMetadata.id.replace('__', ':'),
         _v_: Math.random(),
         ...vectorStyleParam
     };

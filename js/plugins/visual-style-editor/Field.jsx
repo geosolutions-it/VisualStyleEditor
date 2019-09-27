@@ -11,6 +11,7 @@ import { FormGroup, FormControl } from 'react-bootstrap';
 import Select from 'react-select';
 
 import ColorMap from './ColorMap';
+import ImageIcon from './ImageIcon';
 
 import Toolbar from '@mapstore/components/misc/toolbar/Toolbar';
 import ColorSelector from '@mapstore/components/style/ColorSelector';
@@ -122,6 +123,22 @@ export const fields = {
                 onChange={(option = {}) => {
                     onChange(option.value);
                 }}/>
+        </Field>
+    ),
+    image: ({ label, value, onChange = () => {} }) => (
+        <Field
+            label={label}>
+            <div style={{ display: 'flex' }}>
+                <FormGroup style={{ flex: 1 }}>
+                    <FormControl
+                        type="text"
+                        value={value}
+                        onChange={event => onChange(event.target.value)}/>
+                </FormGroup>
+                <ImageIcon
+                    value={value}
+                    onChange={onChange}/>
+            </div>
         </Field>
     ),
     input: ({ label, value, config = {}, onChange = () => {} }) => (

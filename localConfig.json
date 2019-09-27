@@ -98,7 +98,7 @@
                 "name": "TOC",
                 "override": {
                     "Layout": {
-                        "priority": 1,
+                        "priority": 10,
                         "glyph": "1-layer",
                         "position": 1,
                         "size": "auto",
@@ -134,7 +134,36 @@
                     ]
                 }
             },
-            "LayerSettings"
+            "LayerSettings",
+            {
+                "name": "Toolbar",
+                "id": "NavigationBar",
+                "override": {
+                    "Layout": {
+                        "container": "body",
+                        "priority": 1
+                    }
+                },
+                "cfg": {
+                    "id": "navigationBar"
+                }
+            },
+            {
+                "name": "ZoomIn",
+                "override": {
+                    "Toolbar": {
+                        "alwaysVisible": true
+                    }
+                }
+            },
+            {
+                "name": "ZoomOut",
+                "override": {
+                    "Toolbar": {
+                        "alwaysVisible": true
+                    }
+                }
+            }
         ],
         "styles-api": [
             {
@@ -185,7 +214,7 @@
                 "name": "TOC",
                 "override": {
                     "Layout": {
-                        "priority": 1,
+                        "priority": 10,
                         "glyph": "1-layer",
                         "position": 1,
                         "size": "auto",
@@ -219,6 +248,35 @@
                 },
                 "cfg": {
                     "title": "Visual Style Editor"
+                }
+            },
+            {
+                "name": "Toolbar",
+                "id": "NavigationBar",
+                "override": {
+                    "Layout": {
+                        "container": "body",
+                        "priority": 1
+                    }
+                },
+                "cfg": {
+                    "id": "navigationBar"
+                }
+            },
+            {
+                "name": "ZoomIn",
+                "override": {
+                    "Toolbar": {
+                        "alwaysVisible": true
+                    }
+                }
+            },
+            {
+                "name": "ZoomOut",
+                "override": {
+                    "Toolbar": {
+                        "alwaysVisible": true
+                    }
                 }
             }
         ]

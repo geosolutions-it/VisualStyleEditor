@@ -53,7 +53,7 @@ function formatToMode(format) {
 function jsonParser(key, value) {
     return isNumber(parseFloat(value)) && parseFloat(value) || value;
 }
-function toEditorCode(format, code, sources, asObject) {
+function toEditorCode(format, code, sources, asObject, backgroundColor) {
     if (format === 'mbstyle') {
         let mbstyle;
         try {
@@ -63,7 +63,16 @@ function toEditorCode(format, code, sources, asObject) {
                 ...mbstyle,
                 name: 'testbed-15',
                 sources,
-                layers: layers.map(layer => ({ ...layer, id: uuidv1() }))
+                layers: [
+                    ...(backgroundColor
+                    ? [{
+                        id: 'background',
+                        type: 'background',
+                        paint: { 'background-color': backgroundColor }
+                    }]
+                    : []),
+                    ...layers.map(layer => ({ ...layer, id: uuidv1() }))
+                ]
             };
             mbstyle = asObject ? mbstyle : JSON.stringify(mbstyle, null, 2);
         } catch(e) {
@@ -338,7 +347,7 @@ class Stylesheet extends Component {
                                         zoom={12}
                                         id="mapbox-gl-preview"
                                         mbstyle={
-                                            toEditorCode(this.state.currentFormat, this.state.currentCode, this.state.sources, true)
+                                            toEditorCode(this.state.currentFormat, this.state.currentCode, this.state.sources, true, this.props.backgroundColor)
                                         }/>
                                 </div>
                             </ResizableModal>
@@ -347,7 +356,7 @@ class Stylesheet extends Component {
                         <div style={{ flex: 1}}>
                             <Editor
                                 key={selectedMetadataId}
-                                code={toEditorCode(this.state.currentFormat, this.state.currentCode, this.state.sources)}
+                                code={toEditorCode(this.state.currentFormat, this.state.currentCode, this.state.sources, false, this.props.backgroundColor)}
                                 mode={formatToMode(this.state.currentFormat)}/>
                         </div>
                     </div>

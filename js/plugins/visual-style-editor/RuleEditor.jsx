@@ -93,6 +93,22 @@ const parameters = {
             };
         }
     }),
+    iconScale: ({ key = 'size', label = 'Scale' }) => ({
+        type: 'slider',
+        label,
+        config: {
+            range: { min: 0, max: 5 }
+        },
+        setValue: (value = 1) => {
+            return parseFloat(value);
+        },
+        getValue: (value = []) => {
+            const size = value[0];
+            return {
+                [key]: parseFloat(size)
+            };
+        }
+    }),
     opacity: ({ key = 'opacity', label = 'Opacity' }) => ({
         type: 'slider',
         label,
@@ -111,6 +127,15 @@ const parameters = {
     }),
     shape: ({ label, key = 'wellKnownName' }) => ({
         type: 'mark',
+        label,
+        getValue: (value = '') => {
+            return {
+                [key]: value
+            };
+        }
+    }),
+    image: ({ label, key = 'image' }) => ({
+        type: 'image',
         label,
         getValue: (value = '') => {
             return {
@@ -188,7 +213,7 @@ const parameters = {
 
 const groups = {
     mark: {
-        glyph: 'point',
+        glyph: '1-point',
         params: {
             wellKnownName: parameters.shape({ label: 'Shape' }),
             color: parameters.color({ key: 'color', opacityKey: 'opacity', label: 'Fill' }),
@@ -200,7 +225,8 @@ const groups = {
     icon: {
         glyph: 'point',
         params: {
-            size: parameters.size({ key: 'size', label: 'Size' })
+            image: parameters.image({ label: 'Image', key: 'image' }),
+            size: parameters.iconScale({ key: 'size', label: 'Scale' })
         }
     },
     fill: {
@@ -255,16 +281,21 @@ export default function RuleEditor({ rules = [], onAdd = () => {}, onChange = ()
                         preview: <span className="ms-grab-handler">
                             <Glyphicon glyph="menu-hamburger"/>
                         </span>,
-                        title: name,
+                        // title: name,
                         tools: <Toolbar
                         btnDefaultProps={{
                             className: 'square-button-md no-border'
                         }}
                         buttons={[
                             {
-                                glyph: 'point-plus',
-                                tooltip: 'Add point style',
+                                glyph: '1-point-add',
+                                tooltip: 'Add mark style',
                                 onClick: () => onAdd(ruleId, 'Mark', { wellKnownName: 'shape://carrow' })
+                            },
+                            {
+                                glyph: 'point-plus',
+                                tooltip: 'Add icon style',
+                                onClick: () => onAdd(ruleId, 'Icon', { wellKnownName: 'shape://carrow' })
                             },
                             {
                                 glyph: 'line-plus',
@@ -290,7 +321,9 @@ export default function RuleEditor({ rules = [], onAdd = () => {}, onChange = ()
                         body: (
                             <BorderLayout
                                 header={
-                                    [<Symbolizer
+                                    [
+                                    <div key="title" style={{ padding: '0 8px' }}>{name}</div>,
+                                    <Symbolizer
                                         key="filter"
                                         glyph="filter">
                                         <StyleFilterBuilder

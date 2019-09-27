@@ -22,6 +22,9 @@ import * as TOCPlugin from '@mapstore/plugins/TOC';
 import * as VisualStyleEditorPlugin from './plugins/VisualStyleEditor';
 import * as StylesheetPlugin from './plugins/Stylesheet';
 import * as ScaleBoxPlugin from '@mapstore/plugins/ScaleBox';
+import * as ToolbarPlugin from '@mapstore/plugins/Toolbar';
+import * as ZoomInPlugin from '@mapstore/plugins/ZoomIn';
+import * as ZoomOutPlugin from '@mapstore/plugins/ZoomOut';
 
 export default {
     plugins: {
@@ -39,7 +42,10 @@ export default {
         TilesCatalogPlugin,
         LayerSettingsPlugin,
         HomepagePlugin,
-        AuthPlugin
+        AuthPlugin,
+        ToolbarPlugin,
+        ZoomInPlugin,
+        ZoomOutPlugin
     },
     requires: {}
 };
