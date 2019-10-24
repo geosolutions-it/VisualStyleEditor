@@ -22,6 +22,7 @@ import * as smEpics from '../epics/stylesmanager';
 import { push } from 'react-router-redux';
 import emptyState from '@mapstore/components/misc/enhancers/emptyState';
 import loadingState from '@mapstore/components/misc/enhancers/loadingState';
+import isNumber from 'lodash/isNumber';
 
 const theme = {
     scheme: 'monokai',
@@ -44,19 +45,37 @@ const theme = {
     base0F: '#cc6633'
 };
 
-const getOGCStyles = (serviceUrl) =>
+import urlParser from 'url';
+
+const getFullHREF = function(service, href) {
+    if (!href || href.match(/http/)) {
+        return href;
+    }
+    const { protocol, host } = urlParser.parse(service);
+    const parsedHref = urlParser.parse(href);
+    return urlParser.format({
+        ...parsedHref,
+        protocol,
+        host
+    });
+};
+
+export const getOGCStyles = (serviceUrl) =>
     axios.get(serviceUrl)
         .then(({ data }) => {
             const { links = [] } = data;
             const apiUrl = head(links
                 .filter(({ rel, type }) => rel === 'service' && type === 'application/json')
-                .map(({ href }) => href));
+                .map(({ href }) => getFullHREF(serviceUrl, href)));
             const conformanceUrl = head(links
                 .filter(({ rel, type }) => rel === 'conformance' && type === 'application/json')
-                .map(({ href }) => href));
+                .map(({ href }) => getFullHREF(serviceUrl, href)));
             const dataUrl = head(links
-                .filter(({ rel, type }) => rel === 'data' && type === 'application/json')
-                .map(({ href }) => href));
+                .filter(({ rel, type }) =>
+                    rel === 'styles' && type === 'application/json' // gs
+                    || rel === 'styles' && type === undefined // ii
+                )
+                .map(({ href }) => getFullHREF(serviceUrl, href)));
             return [ apiUrl, conformanceUrl, dataUrl ];
         })
         .then((urls) => {
@@ -77,84 +96,59 @@ class SearchInput extends Component {
     static propTypes = {
         stylesService: PropTypes.string,
         tilesService: PropTypes.string,
-        onChange: PropTypes.func,
+        onSearch: PropTypes.func,
         loading: PropTypes.bool,
         filterText: PropTypes.string,
         onFilter: PropTypes.func,
         onEdit: PropTypes.func,
         editLabel: PropTypes.string,
-        editDisabled: PropTypes.bool
+        editDisabled: PropTypes.bool,
+        label: PropTypes.string
     };
-
-    state = {
-        stylesService: '',
-        tilesService: ''
-    };
-
-    componentWillMount() {
-        localStorage.setItem('stylesServiceUrl', this.props.stylesService);
-        localStorage.setItem('tilesServiceUrl', this.props.tilesService);
-        this.setState({
-            stylesService: this.props.stylesService,
-            tilesService: this.props.tilesService
-        });
-    }
 
     render() {
-        const { onChange = () => {}, loading, onEdit = () => {}, editDisabled } = this.props;
-        const { stylesService = '', tilesService = '' } = this.state;
-        const disabled = editDisabled || !tilesService;
+        const { onSearch = () => {}, loading, onEdit = () => {}, editDisabled } = this.props;
+        const disabled = editDisabled;
         return (
             <div className="ms-style-search-input">
                 <div>
+                    <div><h4>{this.props.label}</h4></div>
+                    <div><h5>Styles API Service</h5></div>
+                    {/*<div><p>{this.props.stylesService}</p></div>*/}
+                    {this.props.tilesService && <div><h5>Tiles API Service (needed for Visual Style Editor)</h5></div>}
+                    {/*this.props.tilesService && <div><p>{this.props.tilesService}</p></div>*/}
                     <FormGroup
-                        controlId="service"
-                        key="service">
+                        controlId="filter"
+                        key="filter"
+                        style={{ marginTop: 4 }}>
                         <InputGroup>
                             <FormControl
-                                value={stylesService || ''}
+                                value={ this.props.filterText || ''}
                                 type="text"
-                                placeholder="Enter styles service..."
-                                onChange={(event) => this.setState({ stylesService: event.target.value })}/>
+                                placeholder="Filter styles..."
+                                onChange={(event) => this.props.onFilter(event.target.value)}/>
                             <InputGroup.Addon
                                 className="btn"
-                                onClick={() => loading ? () => {} : onChange('stylesService', stylesService)}>
+                                onClick={() => loading ? () => {} : onSearch()}>
                                 {loading && <Loader size={19}/> || <Glyphicon glyph="search"/>}
                             </InputGroup.Addon>
                         </InputGroup>
                     </FormGroup>
                     <FormGroup
-                        controlId="filter"
-                        key="filter"
-                        style={{ marginTop: 4 }}>
-                        <FormControl
-                            value={ this.props.filterText || ''}
-                            type="text"
-                            placeholder="Filter styles..."
-                            onChange={(event) => this.props.onFilter(event.target.value)}/>
-                    </FormGroup>
-                    <FormGroup
-                        controlId="styleService"
-                        key="styleService"
+                        controlId="edit"
+                        key="edit"
                         style={{ marginTop: 4 }}>
                         <InputGroup>
-                            <FormControl
-                                value={tilesService || ''}
-                                type="text"
-                                placeholder="Enter tiles service..."
-                                onChange={(event) => this.setState({ tilesService: event.target.value })}
-                                onBlur={(event) => {
-                                    onChange('tilesService', event.target.value);
-                                }}/>
-                            <InputGroup.Addon
+                            {this.props.tilesService && <InputGroup.Addon
                                 className="btn"
                                 disabled={disabled}
-                                onClick={() => loading || disabled ? () => {} : onEdit(tilesService)}>
+                                onClick={() => loading || disabled ? () => {} : onEdit()}>
                                 {this.props.editLabel}
-                            </InputGroup.Addon>
+                            </InputGroup.Addon>}
                         </InputGroup>
                     </FormGroup>
                 </div>
+                <hr />
             </div>
         );
     }
@@ -170,8 +164,7 @@ const StyleList = compose(
     emptyState(({ styles = [] }) => styles.length === 0, {
         glyph: '1-stilo',
         title: 'Style API',
-        description: 'Enter a style service in the input above',
-        content: <small>eg: http://my-hostname/geoserver/ogc/styles</small>
+        description: 'Click on search button'
     })
     )(class extends Component {
 
@@ -179,7 +172,9 @@ const StyleList = compose(
         onSelect: PropTypes.func,
         onInfo: PropTypes.func,
         styles: PropTypes.array,
-        selected: PropTypes.bool
+        selected: PropTypes.bool,
+        onDelete: PropTypes.func,
+        stylesService: PropTypes.string
     };
 
     render() {
@@ -195,6 +190,7 @@ const StyleList = compose(
                 {styles.map((styleMetadata) => {
                     const { id, title, description, pointOfContact, error, links = [], loading, selected } = styleMetadata || {};
                     const thumbnail = head(links.filter(({ rel }) => rel === 'preview'));
+                    console.log(links);
                     const thumbUrl = thumbnail && thumbnail.href;
                     return (
                         <div
@@ -226,6 +222,19 @@ const StyleList = compose(
                                             onClick: (event) => {
                                                 event.stopPropagation();
                                                 onInfo(styleMetadata);
+                                            }
+                                        },
+                                        {
+                                            glyph: 'trash',
+                                            tooltip: 'Show all style metadata',
+                                            loading,
+                                            visible: styleMetadata.id.indexOf('style-') !== -1 || !isNaN(parseFloat(styleMetadata.id)) && isNumber(parseFloat(styleMetadata.id)) ? true : false,
+                                            onClick: (event) => {
+                                                event.stopPropagation();
+                                                axios.delete(`${this.props.stylesService}/styles/${styleMetadata.id}`)
+                                                    .then(() => {
+                                                        this.props.onDelete(styleMetadata.id);
+                                                    });
                                             }
                                         }
                                     ]}/>
@@ -263,9 +272,7 @@ const StyleList = compose(
 class StylesManager extends Component {
     static propTypes = {
         onInit: PropTypes.func,
-        styles: PropTypes.array,
-        defaultStylesService: PropTypes.string,
-        defaultTilesService: PropTypes.string
+        styles: PropTypes.array
     };
 
     static defaultProps = {
@@ -283,12 +290,17 @@ class StylesManager extends Component {
 
     componentWillMount() {
         localStorage.setItem('selectedStyles', JSON.stringify([]));
-        const stylesServiceUrl = localStorage.getItem('stylesServiceUrl');
-        const tilesServiceUrl = localStorage.getItem('tilesServiceUrl');
-        this.setState({
-            stylesService: stylesServiceUrl !== null && stylesServiceUrl !== 'null' && stylesServiceUrl || this.props.defaultStylesService,
-            tilesService: tilesServiceUrl !== null && tilesServiceUrl !== 'null' && tilesServiceUrl || this.props.defaultTilesService
-        });
+        try {
+            const option = JSON.parse(localStorage.getItem('stylesAPIService'));
+            const { services = {}, label } = option || {};
+            this.setState({
+                label,
+                stylesService: services.stylesAPI,
+                tilesService: services.tilesAPI
+            });
+        } catch (e) {
+            //
+        }
     }
 
     render() {
@@ -305,20 +317,20 @@ class StylesManager extends Component {
                         onFilter={(filterText) => this.setState({ filterText })}
                         onEdit={() => this.props.onInit('/visual-style-editor')}
                         editDisabled={(this.state.selectedStyles || []).length > 0 ? false : true}
+                        label={this.state.label}
                         editLabel={(this.state.selectedStyles || []).length > 1 ? 'Edit Selected Styles' : 'Edit Selected Style'}
-                        onChange={(key, service) => {
-                            if (key === 'tilesService') return localStorage.setItem(key, service);
-
+                        onSearch={() => {
                             this.setState({
                                 loading: true,
                                 error: false,
                                 filterText: ''
                             });
-                            getOGCStyles(service)
+                            getOGCStyles(this.state.stylesService)
                                 .then((styles) =>
                                     this.setState({
                                         styles,
-                                        loading: false
+                                        loading: false,
+                                        serviceUrl: this.state.stylesService
                                     })
                                 )
                                 .catch(({ data }) =>
@@ -328,15 +340,20 @@ class StylesManager extends Component {
                                         error: isObject(data) && data.description || 'Connection error'
                                     })
                                 );
-                            return localStorage.setItem(key, service);
                         }}/>
                     }>
                     <StyleList
+                        stylesService={this.state.stylesService}
                         styles={this.state.styles
                             .filter((style) => !this.state.filterText || this.state.filterText &&
                                 style.id && style.id.toLowerCase().indexOf(this.state.filterText.toLowerCase()) !== -1
                                 || style.title && style.title.toLowerCase().indexOf(this.state.filterText.toLowerCase()) !== -1
                             )
+                            .filter((style) => style.id !== 'point'
+                            && style.id !== 'line'
+                            && style.id !== 'polygon'
+                            && style.id !== 'generic'
+                            && style.id !== 'raster')
                             .map((style) => ({
                                 ...style,
                                 selected: (this.state.selectedStyles || []).indexOf(style.id) !== -1
@@ -368,6 +385,11 @@ class StylesManager extends Component {
                                         selected: style
                                     });
                                 });
+                        }}
+                        onDelete={(id) => {
+                            this.setState({
+                                styles: this.state.styles.filter((style) => style.id !== id)
+                            });
                         }}
                         onSelect={(event, styleMetadata) => {
                             const add = true; // event.ctrlKey;
@@ -405,8 +427,11 @@ class StylesManager extends Component {
     updateStyle = (style) => {
         if (style && style.layers) return new Promise((resolve) => resolve(style));
         const describedBy = head(style.links
-            .filter(({ rel, type }) => rel === 'describedBy' && type === 'application/json')
-            .map(({ href }) => href));
+            .filter(({ rel, type }) => (
+                rel === 'describedBy' && type === 'application/json' // gs
+                || rel === 'describedBy' && type === undefined // ii
+            ))
+            .map(({ href }) => getFullHREF(this.state.serviceUrl, href)));
         return axios.get(describedBy)
             .then(({ data }) => ({ ...style, ...data }))
             .catch(() => ({ ...style, error: true }));

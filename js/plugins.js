@@ -14,6 +14,7 @@ import * as NavBarPlugin from './plugins/NavBar';
 import TilesCatalogPlugin from './plugins/TilesCatalog';
 import HomepagePlugin from './plugins/Homepage';
 import AuthPlugin from './plugins/Auth';
+import ImagesAPIPlugin from './plugins/ImagesAPI';
 import * as LayerSettingsPlugin from './plugins/LayerSettings';
 
 import * as MapFooterPlugin from '@mapstore/plugins/MapFooter';
@@ -45,7 +46,8 @@ export default {
         AuthPlugin,
         ToolbarPlugin,
         ZoomInPlugin,
-        ZoomOutPlugin
+        ZoomOutPlugin,
+        ImagesAPIPlugin
     },
     requires: {}
 };

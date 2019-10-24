@@ -18,6 +18,7 @@ import { mimeTypeToStyleFormat } from '@mapstore/utils/VectorStyleUtils';
 import PropTypes from 'prop-types';
 import { Button, Glyphicon } from 'react-bootstrap';
 import Form from '../components/Form';
+import { getOGCStyles } from './StylesManager';
 
 const formatLabels = {
     'application/vnd.mapbox-vector-tile': 'MapBox Vector Tile',
@@ -50,7 +51,8 @@ class LayerSettings extends Component {
         enabled: PropTypes.bool,
         selectedLayer: PropTypes.object,
         form: PropTypes.func,
-        onChange: PropTypes.func
+        onChange: PropTypes.func,
+        allStyleForm: PropTypes.func
     };
 
     static defaultProps = {
@@ -75,11 +77,11 @@ class LayerSettings extends Component {
                     .map(({ format }) => ({ value: format, label: formatLabels[format] || format }))
                     .sort((a, b) => a.label > b.label ? 1 : -1)]
             },
-            ...(!isLayerGroup
+            ...(!isLayerGroup && availableStyles.length > 0
             ? [{
                 type: 'select',
                 id: 'style',
-                label: 'Styles',
+                label: 'Available Styles',
                 placeholder: 'Select style...',
                 clearable: false,
                 ignoreAccents: false,
@@ -106,8 +108,59 @@ class LayerSettings extends Component {
             }]
             : [])
         ],
-        onChange: () => {}
+        onChange: () => {},
+        allStyleForm: (allStyle) => [
+            {
+                type: 'select',
+                id: 'style',
+                label: 'All Styles',
+                placeholder: 'Select style...',
+                clearable: false,
+                ignoreAccents: false,
+                setValue: (fieldId, { style: selectedStyle } = {}) => {
+                    const style = selectedStyle && selectedStyle.value;
+                    if (style) {
+                        const availableStyle = allStyle.find(({ id }) => id === style) || {};
+                        const { links = [] } = availableStyle;
+                        const stylesLinks = links.filter(({ rel }) => rel === 'stylesheet') || {};
+                        const { href: url, type: mimeType } = stylesLinks.length > 1
+                            && stylesLinks.filter(({ type }) => type.indexOf('sld') === -1)[0]
+                            || stylesLinks[0];
+                        return {
+                            style,
+                            vectorStyle: {
+                                url,
+                                format: mimeTypeToStyleFormat(mimeType)
+                            }
+                        };
+                    }
+                    return undefined;
+                },
+                options: allStyle.map(({ id, title }) => ({ value: id, label: id || title }))
+            }
+        ]
     };
+
+    state = {};
+
+    componentWillMount() {
+        let serviceUrl = '';
+        try {
+            const option = JSON.parse(localStorage.getItem('tilesAPIService'));
+            const { services = {} } = option || {};
+            serviceUrl = services.stylesAPI;
+        } catch (e) {
+            //
+        }
+        if (serviceUrl) {
+            getOGCStyles(serviceUrl)
+                .then((allStyle = []) => {
+                    this.setState({
+                        allStyle
+                    });
+                });
+        }
+    }
 
     componentWillReceiveProps(newProps) {
         if (this.props.onClose && !newProps.selectedLayer.name && this.props.selectedLayer.name
@@ -129,6 +182,12 @@ class LayerSettings extends Component {
             <Form
                 bootstrap
                 form={this.props.form(selectedLayer)}
+                values={selectedLayer}
+                onChange={(changedOptions) => onChange(selectedLayer.id, 'layers', changedOptions)}/>
+            <hr />
+            <Form
+                bootstrap
+                form={this.props.allStyleForm(this.state.allStyle || [])}
                 values={selectedLayer}
                 onChange={(changedOptions) => onChange(selectedLayer.id, 'layers', changedOptions)}/>
         </div>)

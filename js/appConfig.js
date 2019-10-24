@@ -14,6 +14,7 @@ import HomePage from './pages/Home';
 import StylesAPIPage from './pages/StylesAPI';
 import VisualStyleEditorPage from './pages/VisualStyleEditor';
 import TilesAPIPage from './pages/TilesAPI';
+import ImagesAPIPage from './pages/ImagesAPI';
 import pluginsDef from './plugins';
 
 import emptyState from '@mapstore/components/misc/enhancers/emptyState';
@@ -54,6 +55,11 @@ export default {
             name: 'tiles-api',
             path: '/tiles-api',
             component: notSupportedScreen(TilesAPIPage)
+        },
+        {
+            name: 'images-api',
+            path: '/images-api',
+            component: notSupportedScreen(ImagesAPIPage)
         }
     ],
     pluginsDef,

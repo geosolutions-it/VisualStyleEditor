@@ -28,7 +28,7 @@ import { setControlProperty } from '@mapstore/actions/controls';
 import { setBackground } from '../actions/stylesheet';
 import { createShallowSelectorCreator } from '@mapstore/utils/ReselectUtils';
 import { mergeStyleSheet, convertStyle } from '@mapstore/utils/VectorStyleUtils';
-import { Button, Glyphicon, ControlLabel, FormGroup, FormControl, Alert } from 'react-bootstrap';
+import { Button, Glyphicon, ControlLabel, FormGroup, Alert } from 'react-bootstrap';
 import ColorSelector from '@mapstore/components/style/ColorSelector';
 import ResizableModal from '@mapstore/components/misc/ResizableModal';
 import tinycolor from 'tinycolor2';
@@ -132,9 +132,18 @@ class Stylesheet extends Component {
     };
 
     componentDidMount() {
+        let stylesService;
+        try {
+            const option = JSON.parse(localStorage.getItem('stylesAPIService'));
+            const { services = {} } = option || {};
+            stylesService = services.stylesAPI;
+        } catch (e) {
+            //
+        }
         this.setState({
             form: this.props.form,
-            currentFormat: this.props.form && this.props.form.format
+            currentFormat: this.props.form && this.props.form.format,
+            stylesService
         });
     }
 
@@ -197,21 +206,9 @@ class Stylesheet extends Component {
         if (!styleUrl) return {};
         const { type } = style.link;
 
-        const data = [
-            'title',
-            'description',
-            'pointOfContact'
-        ]
-        .reduce((acc, key) => form[key]
-            ? {
-                ...acc,
-                [key]: form[key]
-            }
-            : { ...acc }, {});
-
         return {
             styleId: form.id,
-            data,
+            data: form,
             type,
             styleUrl
         };
@@ -439,17 +436,18 @@ class Stylesheet extends Component {
                                         const {
                                             data,
                                             type,
-                                            styleUrl,
-                                            styleId
+                                            styleUrl
                                         } = this.getInfo();
                                         if (!styleUrl) return;
                                         this.setState({ loading: true });
-                                        const clonedStyleUrl = styleUrl.replace(styleId, this.state.cloneStyleName);
-                                        axios.put(clonedStyleUrl, code, { auth: this.props.auth, headers: { 'Content-Type': type } })
-                                        .then(() => [null, 'metadata saved'])
-                                        .then(() => {
-                                            return axios.put(`${clonedStyleUrl}/metadata`, data, { auth: this.props.auth })
-                                                .then(() => [null, 'metadata saved']);
+                                        axios.post(`${this.state.stylesService}/styles`, code, { headers: { 'Content-Type': type } })
+                                        .then((response) => [null, response])
+                                        .then((response) => {
+                                            if (response.headers && response.headers.location) {
+                                                return axios.put(`${response.headers.location}/metadata`, data)
+                                                    .then(() => [null, 'metadata saved']);
+                                            }
+                                            return response;
                                         })
                                         .then(() => {
                                             this.setState({
@@ -481,12 +479,10 @@ class Stylesheet extends Component {
                                             styleUrl
                                         } = this.getInfo();
                                         if (!styleUrl) return;
-                                        this.setState({ loading: true });
-
-                                        axios.put(styleUrl, code, { auth: this.props.auth, headers: { 'Content-Type': type } })
+                                        axios.put(styleUrl, code, { headers: { 'Content-Type': type } })
                                         .then(() => [null, 'metadata saved'])
                                         .then(() => {
-                                            return axios.put(`${styleUrl}/metadata`, data, { auth: this.props.auth })
+                                            return axios.put(`${styleUrl}/metadata`, data)
                                                 .then(() => [null, 'metadata saved']);
                                         })
                                         .then(() => {
@@ -511,7 +507,7 @@ class Stylesheet extends Component {
                         {this.state.loading && <div style={{ padding: 8, textAlign: 'center', width: '100%' }}>Saving Style...</div>}
                         {!this.state.loading && (this.state.modal.content === 'clone'
                             ? <div style={{ padding: 8}}>
-                            <FormGroup>
+                            {/*<FormGroup>
                                 <ControlLabel>
                                     Enter id for cloned style
                                 </ControlLabel>
@@ -519,7 +515,7 @@ class Stylesheet extends Component {
                                     type="text"
                                     value={this.state.cloneStyleName}
                                     onChange={(event) => this.setState({ cloneStyleName: event.target.value })}/>
-                            </FormGroup>
+                            </FormGroup>*/}
                         </div>
                         : <div style={{ padding: 8, textAlign: 'center', width: '100%' }}>This operation will override current style on server.</div>)}
                     </ResizableModal>

@@ -23,7 +23,7 @@ import { collectionUrlToLayer, getCollections } from '../api/OGC';
 
 const parseStyle = (styleMetadata, collections) => {
     const collectionsNameWorkspace = collections.map((collection) => {
-        const splitName = collection.id.split(/__|\:/);
+        const splitName = collection.id.split(/\:/);
         const workspace = splitName[1] !== undefined && splitName[0];
         const name = splitName.length > 1 ? splitName[1] : splitName[0];
         return {
@@ -41,35 +41,38 @@ const parseStyle = (styleMetadata, collections) => {
     const layersUrls = layers
         .map(({ id, type }) => {
             const { links = [] } = collectionsNameWorkspace.find(({ name }) => name === id) || {};
-            const layerUrl = (links.find(({ rel, type: mimeType }) => rel === 'collection' && mimeType === 'application/json') || {}).href;
+            const layerUrl = (links.find(({ rel, type: mimeType }) =>
+                rel === 'collection' && mimeType === 'application/json'
+                || rel === 'self' && mimeType === undefined) || {}).href;
             if (!layerUrl) return null;
             return {
                 id,
                 styleLayerName: id,
                 layerUrl,
-                layerType: type
+                layerType: type,
+                ...(type === 'raster' && { _v_: Math.random() })
             };
         })
         .filter(val => val);
 
     return axios.all(
-            [
-                ...stylesUrls.map((url) =>
-                    axios.get(url)
-                        .then(({ data }) => data )
-                        .catch(() => null )
-                ),
-                ...layersUrls.map(({ layerUrl, styleLayerName, layerType }) =>
-                    collectionUrlToLayer(layerUrl)
-                        .then(layer => ({
-                            ...layer,
-                            styleLayerName,
-                            layerType
-                        }))
-                        .catch(() => null)
-                )
-            ]
-        )
+        [
+            ...stylesUrls.map((url) =>
+                axios.get(url)
+                    .then(({ data }) => data)
+                    .catch(() => null)
+            ),
+            ...layersUrls.map(({ layerUrl, styleLayerName, layerType }) =>
+                collectionUrlToLayer(layerUrl)
+                    .then(layer => ({
+                        ...layer,
+                        styleLayerName,
+                        layerType
+                    }))
+                    .catch(() => null)
+            )
+        ]
+    )
         .then((response) => ({
             styleMetadata,
             layers: response.filter((res, idx) => idx >= stylesUrls.length),
@@ -102,7 +105,11 @@ const setupLayer = (layer, availableStyles, styleMetadata) => {
     const tileUrls = layer.layerType === 'raster'
         ? layer.tileUrls
         : layer.tileUrls.filter(({ format }) => isVectorFormat(format));
-    const { format } = (tileUrls.find((tileUrl) => tileUrl.format === 'image/png' || tileUrl.format === 'image/png8') || tileUrls[0] || {});
+    const { format } = (
+        tileUrls.find((tileUrl) => tileUrl.format === 'image/png' || tileUrl.format === 'image/png8')
+        || tileUrls.find((tileUrl) => tileUrl.format === 'application/vnd.mapbox-vector-tile')
+        || tileUrls[0]
+        || {});
 
     return {
         ...layer,
@@ -111,11 +118,10 @@ const setupLayer = (layer, availableStyles, styleMetadata) => {
         format,
         visualStyleEditor: {
             styleMetadataId: styleMetadata.id,
-            style: styleMetadata.id.replace('__', ':'),
+            style: styleMetadata.id,
             availableStyles
         },
-        style: styleMetadata.id.replace('__', ':'),
-        _v_: Math.random(),
+        style: styleMetadata.id,
         ...vectorStyleParam
     };
 };
@@ -137,6 +143,11 @@ export const vseInitMapConfiguration = (action$) =>
                             setControlProperty('rightmenu', 'activePlugin', null),
                             setControlProperty('layoutmenu', 'activePlugin', 'TOC'),
                             setControlProperty('leftmenu', 'activePlugin', 'TOC')
+                        ],
+                        'images-api': () => [
+                            setControlProperty('rightmenu', 'activePlugin', null),
+                            setControlProperty('layoutmenu', 'activePlugin', 'ImagesAPI'),
+                            setControlProperty('leftmenu', 'activePlugin', 'ImagesAPI')
                         ]
                     };
                     if (pathname !== 'visual-style-editor') {
@@ -153,59 +164,68 @@ export const vseInitMapConfiguration = (action$) =>
                             setControlProperty('visualStyleEditor', 'loading', false)
                         );
                     }
-                    let tilesService = localStorage.getItem('tilesServiceUrl');
+                    let tilesService;
+                    let serviceUrl;
+                    try {
+                        const option = JSON.parse(localStorage.getItem('stylesAPIService'));
+                        const { services = {} } = option || {};
+                        serviceUrl = services.stylesAPI;
+                        tilesService = services.tilesAPI;
+
+                    } catch (e) {
+                        //
+                    }
                     return Rx.Observable
                         .defer(() => axios.all([
                             getCollections(tilesService).then((collections) => collections),
                             ...(selectedStyles).map((style) => updateStyle(style))]))
                         .switchMap((res) => {
-                            const [ collections ] = res;
+                            const [collections] = res;
                             const styles = res.filter((item, idx) => idx > 0);
                             return Rx.Observable.defer(() => axios.all(
                                 styles.map(styleMetadata => parseStyle(styleMetadata, collections))
                             ))
-                            .switchMap((config) => {
-                                const newLayers = config.reduce((acc, { layers: configLayers, styles: stylesheets, styleMetadata }) => {
-                                    const availableStyles = stylesheets.map((style) => ({ ...style, format: mimeTypeToStyleFormat(style && style.link && style.link.type) }));
-                                    if (configLayers.length === 1) {
+                                .switchMap((config) => {
+                                    const newLayers = config.reduce((acc, { layers: configLayers, styles: stylesheets, styleMetadata }) => {
+                                        const availableStyles = stylesheets.map((style) => ({ ...style, format: mimeTypeToStyleFormat(style && style.link && style.link.type) }));
+                                        if (configLayers.length === 1) {
+                                            return [
+                                                ...acc,
+                                                setupLayer(configLayers[0], availableStyles, styleMetadata)
+                                            ];
+                                        }
+                                        const style = head(availableStyles.filter(({ native }) => native));
+                                        const splitStyle = splitStyleSheet(style.format, style.styleBody, { onlyLayers: true });
                                         return [
                                             ...acc,
-                                            setupLayer(configLayers[0], availableStyles, styleMetadata)
+                                            ...configLayers.map((layer) => {
+                                                return setupLayer(layer, [{
+                                                    ...style,
+                                                    split: true,
+                                                    styleBody: (splitStyle.find(({ layerName }) => layerName === layer.styleLayerName) || {}).group
+                                                }], styleMetadata);
+                                            })
                                         ];
-                                    }
-                                    const style = head(availableStyles.filter(({ native }) => native));
-                                    const splitStyle = splitStyleSheet(style.format, style.styleBody, { onlyLayers: true });
-                                    return [
-                                        ...acc,
-                                        ...configLayers.map((layer) => {
-                                            return setupLayer(layer, [{
-                                                ...style,
-                                                split: true,
-                                                styleBody: (splitStyle.find(({ layerName }) => layerName === layer.styleLayerName) || {}).group
-                                            }], styleMetadata);
-                                        })
-                                    ];
-                                }, []);
-                                let serviceUrl = localStorage.getItem('stylesService');
-                                const metadata = config.map(({ styleMetadata, styles: stylesheets }) => {
-                                    const style = head(stylesheets.filter(({ native }) => native));
-                                    const format = mimeTypeToStyleFormat(style && style.link && style.link.type);
-                                    return {
-                                        ...styleMetadata,
-                                        serviceUrl,
-                                        format,
-                                        backgroundColor: style && style.styleBody
-                                            ? getBackgroundColor(format, style.styleBody)
-                                            : '#dddddd'
-                                    };
+                                    }, []);
+                                    const metadata = config.map(({ styleMetadata, styles: stylesheets }) => {
+                                        const style = head(stylesheets.filter(({ native }) => native));
+                                        const format = mimeTypeToStyleFormat(style && style.link && style.link.type);
+                                        return {
+                                            ...styleMetadata,
+                                            serviceUrl,
+                                            format,
+                                            backgroundColor: style && style.styleBody
+                                                ? getBackgroundColor(format, style.styleBody)
+                                                : '#dddddd'
+                                        };
+                                    });
+                                    return Rx.Observable.of(
+                                        ...newLayers.map(layer => addLayer({ ...layer, id: uuidv1() })),
+                                        setMetadata(metadata),
+                                        ...(pageActions[pathname] && pageActions[pathname]() || []),
+                                        setControlProperty('visualStyleEditor', 'loading', false)
+                                    );
                                 });
-                                return Rx.Observable.of(
-                                    ...newLayers.map(layer => addLayer({ ...layer, id: uuidv1() })),
-                                    setMetadata(metadata),
-                                    ...(pageActions[pathname] && pageActions[pathname]() || []),
-                                    setControlProperty('visualStyleEditor', 'loading', false)
-                                );
-                            });
                         })
                         .catch(() => Rx.Observable.of(
                             setControlProperty('visualStyleEditor', 'loading', false)

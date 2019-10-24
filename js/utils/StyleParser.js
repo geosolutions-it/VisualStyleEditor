@@ -63,6 +63,36 @@ export const setBackgroundColor = function(format, stylesheet, { styleName, back
         });
         return code;
     }
+    if (format === 'mbstyle') {
+        const background = (stylesheet.layers || []).find(({ id }) => id === 'background');
+        return {
+            ...stylesheet,
+            layers: background
+                ? (stylesheet.layers || [])
+                    .map((layer) => {
+                        if (layer.id === 'background') {
+                            return {
+                                "id": "background",
+                                "type": "background",
+                                "paint": {
+                                    "background-color": backgroundColor
+                                }
+                            };
+                        }
+                        return layer;
+                    })
+                : [
+                    {
+                        "id": "background",
+                        "type": "background",
+                        "paint": {
+                            "background-color": backgroundColor
+                        }
+                    },
+                    ...(stylesheet.layers || [])
+                ]
+        };
+    }
     return stylesheet;
 };
 
@@ -80,6 +110,10 @@ export const getBackgroundColor = function(format, stylesheet) {
                 }])
             );
         });
+    }
+    if (format === 'mbstyle') {
+        const background = (stylesheet.layers || []).find(({ id }) => id === 'background');
+        backgroundColor = background && background.paint && background.paint['background-color'] || '#dddddd';
     }
     return backgroundColor;
 };
