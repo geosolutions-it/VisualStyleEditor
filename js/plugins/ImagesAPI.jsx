@@ -22,6 +22,7 @@ import tinycolor from 'tinycolor2';
 import Toolbar from '@mapstore/components/misc/toolbar/Toolbar';
 import get from 'lodash/get';
 import { createSelector } from 'reselect';
+import Loader from '@mapstore/components/misc/Loader';
 
 class ImagesAPI extends React.Component {
     static propTypes = {
@@ -125,15 +126,18 @@ class ImagesAPI extends React.Component {
                         position: 'relative',
                         width: '100%'
                     }}>
-                        <Dropzone
+                        {!this.state.loadingPost ? <Dropzone
                             className="dropzone"
                             activeClassName="dropzone-active"
                             multiple={false}
                             onDrop={(files) => {
                                 const _images = [...files.filter(({ type }) => {
-                                    return type.match(/tiff/g);
+                                    return type.match(/tiff|zip/g);
                                 })];
                                 if (!_images[0]) return null;
+                                this.setState({
+                                    loadingPost: true
+                                });
                                 axios.post(`${this.state.selectedImagesService}?filename=${_images[0].name}`, _images[0], {
                                     headers: {
                                         'Content-Type': _images[0].type,
@@ -141,11 +145,19 @@ class ImagesAPI extends React.Component {
                                     }
                                 })
                                 .then(() => {
+                                    this.setState({
+                                        loadingPost: false
+                                    });
                                     this.getImageLayers();
+                                })
+                                .catch(() => {
+                                    this.setState({
+                                        loadingPost: false
+                                    });
                                 });
                             }}>
                             Drop or click here to add a new tiff to upload
-                        </Dropzone>
+                        </Dropzone> : <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}><Loader size={32} /></div>}
                         <SideGrid
                             size="sm"
                             items={(this.state.features || [])

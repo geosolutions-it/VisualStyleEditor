@@ -73,7 +73,7 @@ export function collectionUrlToLayer(collectionUrl, serviceUrl) {
                         .then(function({ data }) {
                             const { tileMatrixSetLinks = [], links } = data;
                             const tile = links
-                                .filter(({ rel }) => (rel === 'tile' || rel === 'tiles' )) // remove 'tile' rel
+                                .filter(({ rel }) => (rel === 'tile' || rel === 'tiles' || rel === 'item' )) // remove 'tile' rel
                                 .map(({ href: url, type: format }) => ({ url, format }));
                             return {
                                 tileMatrixSetLinks,

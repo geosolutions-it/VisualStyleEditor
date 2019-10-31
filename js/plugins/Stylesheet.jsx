@@ -28,7 +28,7 @@ import { setControlProperty } from '@mapstore/actions/controls';
 import { setBackground } from '../actions/stylesheet';
 import { createShallowSelectorCreator } from '@mapstore/utils/ReselectUtils';
 import { mergeStyleSheet, convertStyle } from '@mapstore/utils/VectorStyleUtils';
-import { Button, Glyphicon, ControlLabel, FormGroup, Alert } from 'react-bootstrap';
+import { Button, Glyphicon, ControlLabel, FormGroup, Alert, FormControl } from 'react-bootstrap';
 import ColorSelector from '@mapstore/components/style/ColorSelector';
 import ResizableModal from '@mapstore/components/misc/ResizableModal';
 import tinycolor from 'tinycolor2';
@@ -443,8 +443,8 @@ class Stylesheet extends Component {
                                         axios.post(`${this.state.stylesService}/styles`, code, { headers: { 'Content-Type': type } })
                                         .then((response) => [null, response])
                                         .then((response) => {
-                                            if (response.headers && response.headers.location) {
-                                                return axios.put(`${response.headers.location}/metadata`, data)
+                                            if (response[1] && response[1].headers && response[1].headers.location) {
+                                                return axios.put(`${response[1].headers.location}/metadata`, data)
                                                     .then(() => [null, 'metadata saved']);
                                             }
                                             return response;

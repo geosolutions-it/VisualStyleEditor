@@ -190,7 +190,6 @@ const StyleList = compose(
                 {styles.map((styleMetadata) => {
                     const { id, title, description, pointOfContact, error, links = [], loading, selected } = styleMetadata || {};
                     const thumbnail = head(links.filter(({ rel }) => rel === 'preview'));
-                    console.log(links);
                     const thumbUrl = thumbnail && thumbnail.href;
                     return (
                         <div

@@ -87,7 +87,7 @@ const parseStyle = (styleMetadata, collections) => {
 const updateStyle = (style) => {
     if (style && style.layers) return new Promise((resolve) => resolve(style));
     const describedBy = head(style.links
-        .filter(({ rel, type }) => rel === 'describedBy' && type === 'application/json')
+        .filter(({ rel, type }) => rel === 'describedBy' && type === 'application/json' || rel === 'describedBy' && type === undefined)
         .map(({ href }) => href));
     return axios.get(describedBy)
         .then(({ data }) => ({ ...style, ...data }))
