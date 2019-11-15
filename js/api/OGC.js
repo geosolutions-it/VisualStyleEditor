@@ -41,7 +41,7 @@ export function collectionUrlToLayer(collectionUrl, serviceUrl) {
         .then(function({ data: collection }) {
             const { id, title, extent, links, styles: availableStyles } = collection;
             const spatial = extent && extent.spatial && extent.spatial.bbox && extent.spatial.bbox[0] // ii
-                || extent && extent.spatial // gs
+                || extent && extent.spatial.length < 4 && extent.spatial[0] // gs
                 || [-180, -90, 180, 90];
             const tiles = (links || []).filter(({ rel, type }) =>
                 rel === 'tiles' && type === 'application/json'

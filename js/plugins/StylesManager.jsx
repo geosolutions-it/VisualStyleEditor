@@ -22,7 +22,7 @@ import * as smEpics from '../epics/stylesmanager';
 import { push } from 'react-router-redux';
 import emptyState from '@mapstore/components/misc/enhancers/emptyState';
 import loadingState from '@mapstore/components/misc/enhancers/loadingState';
-import isNumber from 'lodash/isNumber';
+// import isNumber from 'lodash/isNumber';
 
 const theme = {
     scheme: 'monokai',
@@ -222,12 +222,12 @@ const StyleList = compose(
                                                 event.stopPropagation();
                                                 onInfo(styleMetadata);
                                             }
-                                        },
+                                        }/* ,
                                         {
                                             glyph: 'trash',
                                             tooltip: 'Show all style metadata',
                                             loading,
-                                            visible: styleMetadata.id.indexOf('style-') !== -1 || !isNaN(parseFloat(styleMetadata.id)) && isNumber(parseFloat(styleMetadata.id)) ? true : false,
+                                            visible: styleMetadata.id.indexOf('style-') !== -1 ? true : false,
                                             onClick: (event) => {
                                                 event.stopPropagation();
                                                 axios.delete(`${this.props.stylesService}/styles/${styleMetadata.id}`)
@@ -235,7 +235,7 @@ const StyleList = compose(
                                                         this.props.onDelete(styleMetadata.id);
                                                     });
                                             }
-                                        }
+                                        }*/
                                     ]}/>
                                 <div
                                     style={{

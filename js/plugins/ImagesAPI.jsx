@@ -23,11 +23,14 @@ import Toolbar from '@mapstore/components/misc/toolbar/Toolbar';
 import get from 'lodash/get';
 import { createSelector } from 'reselect';
 import Loader from '@mapstore/components/misc/Loader';
+import { Button } from 'react-bootstrap';
+import { updateNode } from '@mapstore/actions/layers';
 
 class ImagesAPI extends React.Component {
     static propTypes = {
         setLayers: PropTypes.func,
-        auth: PropTypes.object
+        auth: PropTypes.object,
+        onUpdate: PropTypes.func
     };
 
     static defaultProps = {
@@ -118,7 +121,14 @@ class ImagesAPI extends React.Component {
                         }}>
                             <div><strong>{this.state.label} Images API</strong></div>
                             <small>
-                                Data: {this.state.imageName}
+                                <Button
+                                    bsStyle="primary"
+                                    bsSize="sm"
+                                    onClick={() => {
+                                        this.props.onUpdate('image_layer', 'layers', { _v_: Date.now() });
+                                    }}>
+                                    Reload {this.state.imageName} layer
+                                </Button>
                             </small>
                         </div>
                     }>
@@ -202,7 +212,7 @@ const ImagesAPIPlugin = connect(
             password
         }
     })
-    ), { setLayers })(ImagesAPI);
+    ), { setLayers, onUpdate: updateNode })(ImagesAPI);
 
 export default createPlugin('ImagesAPI', {
     component: ImagesAPIPlugin,

@@ -3,9 +3,7 @@
         "url": "proxy/?url=",
         "useCORS": [
             "http://localhost:8090/geoserver",
-            "http://localhost:8080/geoserver",
-            "https://maps.geo-solutions.it/geoserver",
-            "http://maps.geo-solutions.it/geoserver"
+            "http://localhost:8080/geoserver"
         ]
     },
     "geoStoreUrl": "/mapstore/rest/geostore",
@@ -61,7 +59,42 @@
                     "containerPosition": "header"
                 }
             },
-            "Homepage"
+            {
+                "name": "Homepage",
+                "cfg": {
+                    "stylesAPIService": [
+                        {
+                            "value": "geoserver",
+                            "label": "GeoServer",
+                            "services": {
+                                "tilesAPI": "http://localhost:8080/geoserver/ogc/tiles",
+                                "stylesAPI": "http://localhost:8080/geoserver/ogc/styles"
+                            }
+                        }
+                    ],
+                    "tilesAPIService": [
+                        {
+                            "value": "geoserver",
+                            "label": "GeoServer",
+                            "services": {
+                                "tilesAPI": "http://localhost:8080/geoserver/ogc/tiles",
+                                "stylesAPI": "http://localhost:8080/geoserver/ogc/styles"
+                            }
+                        }
+                    ],
+                    "imagesAPIService": [
+                        {
+                            "value": "geoserver",
+                            "label": "GeoServer",
+                            "imageName": "vtp:imagery",
+                            "services": {
+                                "tilesAPI": "http://localhost:8080/geoserver/ogc/tiles/collections/workspace:imagery",
+                                "imagesAPI": "http://localhost:8080/geoserver/ogc/images/collections/workspace:imagery/images"
+                            }
+                        }
+                    ]
+                }
+            }
         ],
         "tiles-api": [
             "Layout",
@@ -74,7 +107,7 @@
                     }
                 },
                 "cfg": {
-                    "title": "Map & Tiles API"
+                    "title": "Tiles API"
                 }
             },
             {
@@ -118,12 +151,7 @@
                     }
                 }
             },
-            {
-                "name": "TilesCatalog",
-                "cfg": {
-                    "defaultService": "http://localhost:8080/geoserver/ogc/tiles"
-                }
-            },
+            "TilesCatalog",
             {
                 "name": "CRSSelector",
                 "cfg": {
@@ -166,13 +194,7 @@
             }
         ],
         "styles-api": [
-            {
-                "name": "StylesManager",
-                "cfg": {
-                    "defaultStylesService": "http://localhost:8080/geoserver/ogc/styles",
-                    "defaultTilesService": "http://localhost:8080/geoserver/ogc/tiles"
-                }
-            },
+            "StylesManager",
             {
                 "name": "NavBar",
                 "cfg": {
@@ -182,7 +204,6 @@
             }
         ],
         "visual-style-editor": [
-            "Auth",
             {
                 "name": "Map",
                 "cfg": {
@@ -277,6 +298,34 @@
                     "Toolbar": {
                         "alwaysVisible": true
                     }
+                }
+            }
+        ],
+        "images-api": [
+            "ImagesAPI",
+            "Layout",
+            {
+                "name": "NavBar",
+                "cfg": {
+                    "containerPosition": "header",
+                    "title": "Images API"
+                }
+            },
+            {
+                "name": "Map",
+                "cfg": {
+                    "mapOptions": {
+                        "openlayers": {
+                            "interactions": {
+                                "pinchRotate": false,
+                                "altShiftDragRotate": false
+                            }
+                        }
+                    },
+                    "title": "Images API",
+                    "description": "map is empty",
+                    "content": " ",
+                    "glyph": "1-raster"
                 }
             }
         ]

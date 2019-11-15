@@ -28,7 +28,7 @@ import { setControlProperty } from '@mapstore/actions/controls';
 import { setBackground } from '../actions/stylesheet';
 import { createShallowSelectorCreator } from '@mapstore/utils/ReselectUtils';
 import { mergeStyleSheet, convertStyle } from '@mapstore/utils/VectorStyleUtils';
-import { Button, Glyphicon, ControlLabel, FormGroup, Alert, FormControl } from 'react-bootstrap';
+import { Button, Glyphicon, ControlLabel, FormGroup, Alert } from 'react-bootstrap';
 import ColorSelector from '@mapstore/components/style/ColorSelector';
 import ResizableModal from '@mapstore/components/misc/ResizableModal';
 import tinycolor from 'tinycolor2';

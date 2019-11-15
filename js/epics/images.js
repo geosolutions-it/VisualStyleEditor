@@ -14,7 +14,7 @@ import uuidv1 from 'uuid/v1';
 import { collectionUrlToLayer } from '../api/OGC';
 
 const VECTOR_LAYER_ID = uuidv1();
-const TILE_LAYER_ID = uuidv1();
+const TILE_LAYER_ID = 'image_layer';
 
 export const vseInitImagesAPI = (action$) =>
     action$.ofType(SET_LAYERS)
